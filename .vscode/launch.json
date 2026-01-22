@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "Cortex Debug",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/target/thumbv7em-none-eabihf/debug/learn_0",
+            "request": "launch",
+            "type": "cortex-debug",
+            "runToEntryPoint": "main",
+            "servertype": "stlink",
+            "svdFile": "/opt/st/stm32cubeclt_1.20.0/STMicroelectronics_CMSIS_SVD/STM32F303.svd",
+            "device": "STM32F303",
+            "preLaunchTask": "rust: cargo build",
+            "showDevDebugOutput": "raw",
+        }
+    ]
+}
