@@ -2,22 +2,30 @@ use core::ptr;
 
 pub type MCUErrorCode = u32;
 pub const MCU_ERR_INVALID_PIN: MCUErrorCode = 0;
-pub const MCU_ERR_INVALID_PORTNAME: MCUErrorCode = 1;
+pub const MCU_ERR_INVALID_BITSHIFT: MCUErrorCode = 1;
 
-// Offsets for GPIOx control registers
-const GPIO_MODER_OFFSET: u32 = 0;
-const GPIO_OTYPER_OFFSET: u32 = 0x04;
-const GPIO_OSPEEDR_OFFSET: u32 = 0x08;
-const GPIO_PUPDR_OFFSET: u32 = 0x0C;
+type RegisterAddress = *mut u32;
 
+// Offsets onto port x base address for GPIOx control registers (x = A to D)
+const GPIO_MODER_OFFSET: u32 = 0; // port mode register (RM3016 11.4.1)
+const GPIO_OTYPER_OFFSET: u32 = 0x04; // port output type register (RM3016 11.4.2)
+const GPIO_OSPEEDR_OFFSET: u32 = 0x08; // port output speed register (RM3016 11.4.3)
+const GPIO_PUPDR_OFFSET: u32 = 0x0C; // port output pull-up/pull-down register (RM3016 11.4.4)
+
+// Offsets onto port x base address for GPIOx data registers (x = A to D)
+const GPIO_IDR_OFFSET: u32 = 0x10; // input data register (RM0316 11.4.5)
+const GPIO_ODR_OFFSET: u32 = 0x14; // output data register (RM0316 11.4.6)
+const GPIO_BSRR_OFFSET: u32 = 0x18; // port bit set/reset register (RM0316 11.4.7)
 
 #[derive(Clone, Copy)]
 pub enum GPIOPortName {
-    A, B, C, D
+    A,
+    B,
+    C,
+    D,
 }
 
 impl GPIOPortName {
-
     /**
      * Translate to a valid base address as per RM0316, Table 4
      */
@@ -27,17 +35,24 @@ impl GPIOPortName {
             GPIOPortName::B => 0x48000400,
             GPIOPortName::C => 0x48000800,
             GPIOPortName::D => 0x48000C00,
-            _ => return Err(MCU_ERR_INVALID_PORTNAME)
         };
 
         Ok(gpio_base)
     }
 }
- 
+
 trait GPIOBits {
     fn to_bit_value(&self) -> u32;
-    fn bit_mask(&self) -> u32;
-    fn bit_size() -> u32;    
+
+    // overwrite this, if the bits must take more than one bit
+    fn bit_mask() -> u32 {
+        0x1
+    }
+
+    // overwrite this, if the bits must take more than one bit
+    fn bit_size() -> u32 {
+        0x1
+    }
 }
 
 pub enum GPIOMode {
@@ -57,7 +72,7 @@ impl GPIOBits for GPIOMode {
         }
     }
 
-    fn bit_mask(&self) -> u32 {
+    fn bit_mask() -> u32 {
         0x03
     }
 
@@ -66,19 +81,23 @@ impl GPIOBits for GPIOMode {
     }
 }
 
-pub unsafe fn gpio_set_pin_mode(port: GPIOPortName, pin_no: u32, mode: GPIOMode) -> Result<(), MCUErrorCode> {
+pub unsafe fn gpio_set_pin_mode(
+    port: GPIOPortName,
+    pin_no: u32,
+    mode: GPIOMode,
+) -> Result<(), MCUErrorCode> {
     if pin_no > 15 {
         return Err(MCU_ERR_INVALID_PIN);
     }
 
-    let gpio_moder_addr = (port.to_base_address()? + GPIO_MODER_OFFSET as u32) as *mut u32;
-    let pin_bit_position: u32 = pin_no * GPIOMode::bit_size(); 
-    let mode_value: u32 =  mode.to_bit_value() << pin_bit_position; 
-    let mode_mask:  u32 = 0x03 << pin_bit_position;
+    let gpio_moder_addr = (port.to_base_address()? + GPIO_MODER_OFFSET) as RegisterAddress;
+    let pin_bit_position: u32 = pin_no * GPIOMode::bit_size();
+    let mode_value: u32 = mode.to_bit_value() << pin_bit_position;
+    let mode_mask: u32 = GPIOMode::bit_mask() << pin_bit_position;
 
     unsafe {
         let mut gpio_moder_value = read_register(gpio_moder_addr);
-        gpio_moder_value = clear_bits(gpio_moder_value, mode_mask);
+        gpio_moder_value = clear_bits_consecutive(gpio_moder_value, GPIOMode::bit_mask(), GPIOMode::bit_size());
         gpio_moder_value = set_bits(gpio_moder_value, mode_value);
         write_register(gpio_moder_addr, gpio_moder_value);
     }
@@ -97,54 +116,112 @@ impl GPIOBits for GPIOOutputType {
             GPIOOutputType::PushPull => 0x0,
         }
     }
-
-    fn bit_mask(&self) -> u32 {
-        0x1
-    }
-
-    fn bit_size() -> u32 {
-        0x1
-    }
 }
 
-pub unsafe fn gpio_set_output_type(port: GPIOPortName, pin_no: u32, otype: GPIOOutputType) -> Result<(), MCUErrorCode> {
-
+pub unsafe fn gpio_set_output_type(
+    port: GPIOPortName,
+    pin_no: u32,
+    otype: GPIOOutputType,
+) -> Result<(), MCUErrorCode> {
     if pin_no > 15 {
         return Err(MCU_ERR_INVALID_PIN);
     }
 
-    let gpio_otyper_addr: *mut u32 = (port.to_base_address()? + GPIO_OTYPER_OFFSET) as *mut u32;
+    let gpio_otyper_addr: RegisterAddress =
+        (port.to_base_address()? + GPIO_OTYPER_OFFSET) as *mut u32;
     let otype_value: u32 = otype.to_bit_value() << pin_no;
-    let otyper_mask: u32 = otype.bit_mask() << pin_no;
+    let otyper_mask: u32 = GPIOOutputType::bit_mask() << pin_no;
 
     unsafe {
         let otyper_value_old: u32 = read_register(gpio_otyper_addr);
         let otyper_value_masked: u32 = clear_bits(otyper_value_old, otyper_mask);
         let otyper_value_new: u32 = set_bits(otyper_value_masked, otype_value);
         write_register(gpio_otyper_addr, otyper_value_new);
-    }    
+    }
 
     Ok(())
 }
 
-
-fn clear_bits(value: u32, mask: u32) -> u32 {
-    let new_value = value & !mask;
-
-    new_value
+pub enum GPIOPinState {
+    High,
+    Low,
 }
 
-fn set_bits(value: u32, mask: u32) -> u32 {
-    let new_value = value | mask;
+impl GPIOBits for GPIOPinState {
+    fn to_bit_value(&self) -> u32 {
+        match self {
+            GPIOPinState::High => 0x01,
+            GPIOPinState::Low => 0x00,
+        }
+    }
+}
 
-    new_value
+pub enum GPIOPinStateRequest {
+    Set(GPIOPinState),
+    Toggle,
+}
+
+pub unsafe fn gpio_set_pin_state(
+    port: GPIOPortName,
+    pin_no: u32,
+    request: GPIOPinStateRequest,
+) -> Result<(), MCUErrorCode> {
+    if pin_no > 15 {
+        return Err(MCU_ERR_INVALID_PIN);
+    }
+
+    unsafe {
+        match request {
+            GPIOPinStateRequest::Set(state) => {
+                let gpio_bsrr_addr =
+                    (port.to_base_address()? + GPIO_BSRR_OFFSET) as RegisterAddress;
+                let gpio_bsrr_value = match state {
+                    GPIOPinState::High => state.to_bit_value() << pin_no,
+                    GPIOPinState::Low => state.to_bit_value() << (pin_no + 16),
+                };
+                write_register(gpio_bsrr_addr, state.to_bit_value() << pin_no);
+            },
+
+            GPIOPinStateRequest::Toggle => {
+                let gpio_odr_addr = (port.to_base_address() + GPIO_ODR_OFFSET) as RegisterAddress;
+                let mut gpio_odr_value = read_register(gpio_odr_addr);
+                
+                // val      ???? ???? ???? ???? ???? ???x ???? ????
+                // mask     0000 0000 0000 0000 0000 0001 0000 0000
+
+                // clearing bit 8: nval = val & !mask; 
+                // other bits: (? &!0) = (? & 1) = ?  bit 8: (x & !0) = (x & 1) = x
+                // !mask    1111 1111 1111 1111 1111 1110 1111 1111
+                // nval     ???? ???? ???? ???? ???? ???0 ???? ????
+ 
+
+                // setting bit 8
+                // nval ???? ???? ???? ???? ???? ???x ???? ????  nval = val | mask; bitwise OR 
+                let gpio_pin_mask = GPIOPinState::bit_mask() << pin_no; 
+            }
+        }
+    }
+    Ok(())
+}
+
+
+pub fn clear_consecutive_bits(target: u32, offset: u32, num_bits_cons:u32) -> Result<u32, MCUErrorCode> {
+    if offset + num_bits_cons > 32 {
+        return Err(MCU_ERR_INVALID_BITSHIFT); // Invalid bit range
+    }
+    let mask = !(((1u32 << num_bits_cons) - 1) << offset);
+    Ok(target & mask)
+}
+
+fn set_bits_consecutive(value: u32, mask: u32) -> u32 {
+    value | mask
 }
 
 unsafe fn read_register(address: *const u32) -> u32 {
     unsafe { ptr::read_volatile(address) }
 }
 
-unsafe fn write_register(address: *mut u32, value: u32) {
+unsafe fn write_register(address: RegisterAddress, value: u32) {
     unsafe {
         ptr::write_volatile(address, value);
     }

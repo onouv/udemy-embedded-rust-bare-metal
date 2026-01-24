@@ -14,6 +14,7 @@ use board::*;
 use button::Button;
 use led::Led;
 
+// TODO: Make these thread-safe with Box<>, RC<> or the like
 const BLUE_LED: &Led = &board::BLUE_LED;
 const USER_BTN: &Button = &board::USER_BUTTON;
 
