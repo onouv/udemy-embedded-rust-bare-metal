@@ -1,35 +1,32 @@
-use crate::mcu::{self, GPIOPinMode};
+use crate::mcu::*;
 
 #[derive(Clone, Copy)]
 pub struct Led {
-    pub port: mcu::GPIOPortName,
+    pub port: GPIOPortName,
     pub pin: u32,
 }
 
 impl Led {
-    pub fn new(port: mcu::GPIOPortName, pin: u32) -> Self {
-        Self {
-            port,
-            pin
+    pub fn new(port: GPIOPortName, pin: u32) -> Self {
+        Self { port, pin }
+    }
+
+    pub unsafe fn init(&self) {
+        unsafe {
+            gpio_set_pin_mode(self.port, self.pin, GPIOMode::Output);
+            gpio_set_output_type(self.port, self.pin, GPIOOutputType::PushPull);
         }
     }
-}
-pub unsafe fn init(led: &Led){
-    unsafe {
-        mcu::gpio_set_pin_mode(led.port, led.pin, GPIOPinMode::Output);
+
+    pub fn on(&self) {
+        // Implementation to turn the LED on
+    }
+
+    pub fn off(&self) {
+        // Implementation to turn the LED off
+    }
+
+    pub fn toggle(&self) {
+        // Implementation to toggle the LED state
     }
 }
-
-pub fn on(led: &Led) {
-    // Implementation to turn the LED on
-}
-
-pub fn off(led: &Led) {
-    // Implementation to turn the LED off
-}
-
-pub fn toggle(led: &Led) {
-    // Implementation to toggle the LED state
-}
-
-

@@ -1,28 +1,16 @@
-#[derive(PartialEq)]
-pub enum ButtonStatus {
-    Unknown,
-    Pressed,
-    Released
+use crate::mcu::GPIOPortName;
+
+pub enum ButtonName {
+    User,
+    Reset,
 }
 
-pub enum Button {
-    User,
-    Reset
+#[derive(Clone, Copy)]
+pub struct Button {
+    pub port: GPIOPortName,
+    pub pin: u32,
 }
 
 impl Button {
-    pub fn as_pin(&self) -> i32 {
-        match *self {
-            Button::Reset => 11,
-            Button::User => 12,
-        }
-    }
-}
-
-pub fn init(btn: Button) {
-
-}
-
-pub fn read_status(btn: Button) -> ButtonStatus {
-    ButtonStatus::Unknown
+    pub fn init(&self) {}
 }

@@ -4,18 +4,18 @@
 
 use core::panic::PanicInfo;
 
-mod startup_stm32f303;
-mod led;
-mod button;
 mod board;
+mod button;
+mod led;
 mod mcu;
+mod startup_stm32f303;
 
 use board::*;
 use button::Button;
-
-use crate::{button::ButtonStatus, led::Led};
+use led::Led;
 
 const BLUE_LED: &Led = &board::BLUE_LED;
+const USER_BTN: &Button = &board::USER_BUTTON;
 
 #[unsafe(no_mangle)]
 fn main() {
@@ -28,16 +28,15 @@ fn main() {
 
 unsafe fn init_application() {
     unsafe {
-        led::init(&board::BLUE_LED);
-        led::on(BLUE_LED);
-        button::init(Button::User);
+        BLUE_LED.init();
+        BLUE_LED.on();
+        USER_BTN.init();
     }
 }
 
 fn exti0_handler() {
-    led::toggle(BLUE_LED);
+    BLUE_LED.toggle();
 }
-
 
 #[panic_handler]
 fn panic_handler(_info: &PanicInfo) -> ! {
