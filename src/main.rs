@@ -9,6 +9,8 @@ mod button;
 mod led;
 mod mcu;
 mod startup_stm32f303;
+mod bit_utils;
+mod register;
 
 use board::*;
 use button::Button;
