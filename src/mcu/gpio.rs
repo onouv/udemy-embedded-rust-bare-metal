@@ -3,7 +3,7 @@ use super::register::{
     self,
     RegisterAddress
 };
-use crate::utils::{self, bits};
+use crate::utils::bits;
 
 // Offsets onto port x base address for GPIOx control registers (x = A to D)
 const GPIO_MODER_OFFSET: u32 = 0; // port mode register (RM3016 11.4.1)
@@ -131,8 +131,8 @@ pub unsafe fn gpio_set_output_type(
 
     unsafe {
         let otyper_value_old: u32 = register::read(gpio_otyper_addr);
-        let otyper_value_masked: u32 = utils::bits::clear(otyper_value_old, otyper_mask);
-        let otyper_value_new: u32 = utils::bits::set(otyper_value_masked, otype_value);
+        let otyper_value_masked: u32 = bits::clear(otyper_value_old, otyper_mask);
+        let otyper_value_new: u32 = bits::set(otyper_value_masked, otype_value);
         register::write(gpio_otyper_addr, otyper_value_new);
     }
 
@@ -183,15 +183,15 @@ pub unsafe fn gpio_set_pin_state(
                 let mut gpio_odr_value = register::read(gpio_odr_addr);
                 let gpio_pin_mask = GPIOPinState::bit_mask() << pin_no;
 
-                let pin_bit = utils::bits::get(gpio_odr_value, gpio_pin_mask, pin_no);
+                let pin_bit = bits::get(gpio_odr_value, gpio_pin_mask, pin_no);
                 let new_pin_bit: u32 = 0x1;
                 match pin_bit {
                     Ok(bit) => {
                         if bit == 0x1 {
-                            let value = utils::bits::clear(gpio_odr_value, gpio_pin_mask);
+                            let value = bits::clear(gpio_odr_value, gpio_pin_mask);
                             register::write(gpio_odr_addr, value);
                         } else {
-                            let value = utils::bits::set(gpio_odr_value, gpio_pin_mask);
+                            let value = bits::set(gpio_odr_value, gpio_pin_mask);
                         }
                     }
                   Err(()) => {
