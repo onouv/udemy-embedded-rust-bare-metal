@@ -33,7 +33,7 @@ impl GPIO {
     }
 
     pub unsafe fn set_pin_mode(&self, mode: GPIOMode) -> Result<(), MCUErrorCode> {
-        let gpio_moder_addr = (self.port.as_base_address() + GPIO_MODER_OFFSET) as RegisterAddress;
+        let gpio_moder_addr = (self.port.as_ahb2_base_address() + GPIO_MODER_OFFSET) as RegisterAddress;
         let bit_len = GPIOMode::bit_len();
         let pin_bit_position: u32 = self.pin * bit_len;
         let mode_value: u32 = mode.to_bit_value() << pin_bit_position;
@@ -43,7 +43,7 @@ impl GPIO {
 
     pub unsafe fn set_pin_output_type(&self, otype: GPIOOutputType) -> Result<(), MCUErrorCode> {
         let gpio_otyper_addr: RegisterAddress =
-            (self.port.as_base_address() + GPIO_OTYPER_OFFSET) as RegisterAddress;
+            (self.port.as_ahb2_base_address() + GPIO_OTYPER_OFFSET) as RegisterAddress;
         let otype_value: u32 = otype.to_bit_value() << self.pin;
 
         unsafe {
@@ -77,7 +77,7 @@ impl GPIO {
             match request {
                 GPIOPinStateRequest::Set(state) => {
                     let gpio_bsrr_addr =
-                        (self.port.as_base_address() + GPIO_BSRR_OFFSET) as RegisterAddress;
+                        (self.port.as_ahb2_base_address() + GPIO_BSRR_OFFSET) as RegisterAddress;
                     let gpio_bsrr_value = match state {
                         GPIOPinState::High => state.to_bit_value() << self.pin,
                         GPIOPinState::Low => state.to_bit_value() << (self.pin + 16),
@@ -87,7 +87,7 @@ impl GPIO {
 
                 GPIOPinStateRequest::Toggle => {
                     let gpio_bsrr_addr =
-                        (self.port.as_base_address() + GPIO_BSRR_OFFSET) as RegisterAddress;
+                        (self.port.as_ahb2_base_address() + GPIO_BSRR_OFFSET) as RegisterAddress;
                     let mut gpio_odr_value = register::read(gpio_bsrr_addr);
                     let gpio_pin_mask = GPIOPinState::bit_mask() << self.pin;
                     let pin_bit = bits::get(gpio_odr_value, gpio_pin_mask, self.pin);
@@ -112,6 +112,10 @@ impl GPIO {
         }
         Ok(())
     }
+
+    pub unsafe fn enable_clock(&self) {
+        let rcc_ahbenr_addr = (self.port.as_ahb2_base_address()) as RegisterAddress;
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -126,13 +130,32 @@ impl GPIOPort {
     /**
      * Translate to a valid base address as per RM0316, Table 4
      */
-    pub fn as_base_address(&self) -> u32 {
+    pub fn as_ahb2_base_address(&self) -> u32 {
         match self {
             GPIOPort::A => 0x48000000,
             GPIOPort::B => 0x48000400,
             GPIOPort::C => 0x48000800,
             GPIOPort::D => 0x48000C00,
         }
+    }
+
+    /**
+     * Return bit position within the AHB peripheral clock endable register RCC_AHBENR 
+     */
+    pub fn as_rcc_ahbenr_bitpos(&self) -> u32 {
+        match self {
+                    GPIOPort::A => 17,
+                    GPIOPort::B => 18,
+                    GPIOPort::C => 19,
+                    GPIOPort::D => 20,
+                }
+    }
+
+    /**
+     * Return address of the AHB peripheral clock endable register RCC_AHBENR 
+     */
+    pub fn as_rcc_ahbenr_addr(&self) -> RegisterAddress {
+        (0x4002_1000 + 0x14) as RegisterAddress
     }
 }
 

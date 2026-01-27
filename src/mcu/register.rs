@@ -1,7 +1,7 @@
 use core::ptr;
 
 use crate::{
-    mcu::error::{MCU_ERR_INVALID_BITLEN, MCU_ERR_INVALID_OFFSET},
+    mcu::{error::{MCU_ERR_INVALID_BITLEN, MCU_ERR_INVALID_OFFSET}, register},
     utils::bits,
 };
 
@@ -38,6 +38,25 @@ pub unsafe fn set_bits(
         let mask = ((1 << value_bit_length) - 1) << offset;
         let update = bits::set(bits::clear(old, mask), (value << offset) & mask);
         write(address, update);
+    }
+
+    Ok(())
+}
+
+pub unsafe fn set_bit(address: RegisterAddress, bit_position: u32, value: bool) -> Result<(), MCUErrorCode> {
+    if bit_position > 31 {
+        return Err(MCU_ERR_INVALID_OFFSET);
+    }
+
+    unsafe {
+        let register_val = read(address);
+        let update_val = if value {
+            register_val | (1 << bit_position) 
+        } else {
+            register_val & !(1 << bit_position) 
+        };
+
+        write(address, update_val);
     }
 
     Ok(())
