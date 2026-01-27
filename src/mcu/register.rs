@@ -1,7 +1,11 @@
 use core::ptr;
 
-use super::error::MCUErrorCode;
+use crate::{
+    mcu::error::{MCU_ERR_INVALID_BITLEN, MCU_ERR_INVALID_OFFSET},
+    utils::bits,
+};
 
+use super::error::MCUErrorCode;
 
 pub type RegisterAddress = *mut u32;
 
@@ -15,6 +19,26 @@ pub unsafe fn write(address: RegisterAddress, value: u32) {
     }
 }
 
-pub fn set_bits() -> Result<(), MCUErrorCode> {
+pub unsafe fn set_bits(
+    address: RegisterAddress,
+    value: u32,
+    offset: u32,
+    value_bit_length: u32,
+) -> Result<(), MCUErrorCode> {
+    if offset < 32 {
+        return Err(MCU_ERR_INVALID_OFFSET);
+    }
+
+    if !(1..=32).contains(&value_bit_length) {
+        return Err(MCU_ERR_INVALID_BITLEN);
+    }
+
+    unsafe {
+        let old = read(address);
+        let mask = ((1 << value_bit_length) - 1) << offset;
+        let update = bits::set(bits::clear(old, mask), (value << offset) & mask);
+        write(address, update);
+    }
+
     Ok(())
 }

@@ -5,6 +5,9 @@ use button::Button;
 use led::Led;
 use crate::mcu::gpio::GPIOPortName;
 
+
+// TODO: make these thread safe 
+
 pub const BLUE_LED: Led = Led {
     port: GPIOPortName::A,
     pin: 8,

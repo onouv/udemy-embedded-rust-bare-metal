@@ -19,14 +19,32 @@ impl Led {
     }
 
     pub fn on(&self) {
-        // Implementation to turn the LED on
+        unsafe {
+            gpio_set_pin_state(
+                self.port,
+                self.pin,
+                GPIOPinStateRequest::Set(GPIOPinState::High),
+            );
+        }
     }
 
     pub fn off(&self) {
-        // Implementation to turn the LED off
+        unsafe {
+            gpio_set_pin_state(
+                self.port,
+                self.pin,
+                GPIOPinStateRequest::Set(GPIOPinState::Low),
+            );
+        }
     }
 
     pub fn toggle(&self) {
-        // Implementation to toggle the LED state
+        unsafe {
+            gpio_set_pin_state(
+                self.port,
+                self.pin,
+                GPIOPinStateRequest::Toggle
+            );
+        }
     }
 }
