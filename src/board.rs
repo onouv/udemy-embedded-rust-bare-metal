@@ -1,13 +1,16 @@
-use crate::button::Button;
-use crate::led::Led;
-use crate::mcu;
+pub mod led;
+pub mod button;
+
+use button::Button;
+use led::Led;
+use crate::mcu::gpio::GPIOPortName;
 
 pub const BLUE_LED: Led = Led {
-    port: mcu::GPIOPortName::A,
+    port: GPIOPortName::A,
     pin: 8,
 };
 
 pub const USER_BUTTON: Button = Button {
-    port: mcu::GPIOPortName::A,
+    port: GPIOPortName::A,
     pin: 0,
 };

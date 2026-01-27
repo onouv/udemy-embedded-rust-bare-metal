@@ -5,16 +5,14 @@
 use core::panic::PanicInfo;
 
 mod board;
-mod button;
-mod led;
 mod mcu;
 mod startup_stm32f303;
-mod bit_utils;
-mod register;
+mod utils;
 
-use board::*;
-use button::Button;
-use led::Led;
+use board::{
+    button::Button,
+    led::Led
+};
 
 // TODO: Make these thread-safe with Box<>, RC<> or the like
 const BLUE_LED: &Led = &board::BLUE_LED;

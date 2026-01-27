@@ -1,4 +1,4 @@
-use crate::mcu::GPIOPortName;
+use crate::mcu::gpio::GPIOPortName;
 
 pub enum ButtonName {
     User,

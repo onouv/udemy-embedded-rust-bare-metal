@@ -1,5 +1,4 @@
-use crate::mcu::*;
-
+use crate::mcu::gpio::*;
 
 #[derive(Clone, Copy)]
 pub struct Led {
