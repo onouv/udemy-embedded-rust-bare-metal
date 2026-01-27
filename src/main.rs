@@ -2,21 +2,14 @@
 #![no_main]
 #![allow(clippy::empty_loop, unused)]
 
-use core::panic::PanicInfo;
-
 mod board;
 mod mcu;
 mod startup_stm32f303;
 mod utils;
 
-use board::{
-    button::Button,
-    led::Led
-};
+use board::{BLUE_LED, USER_BTN};
+use core::panic::PanicInfo;
 
-// TODO: Make these thread-safe with Box<>, RC<> or the like
-const BLUE_LED: &Led = &board::BLUE_LED;
-const USER_BTN: &Button = &board::USER_BUTTON;
 
 #[unsafe(no_mangle)]
 fn main() {

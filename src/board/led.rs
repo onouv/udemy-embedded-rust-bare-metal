@@ -1,50 +1,42 @@
-use crate::mcu::gpio::*;
+use crate::mcu::gpio::{
+    self, GPIO, GPIOMode, GPIOOutputType, GPIOPinState, GPIOPinStateRequest,
+};
 
 #[derive(Clone, Copy)]
 pub struct Led {
-    pub port: GPIOPortName,
-    pub pin: u32,
+    pub io: GPIO,  // TODO: this is public, only so GPIO can be const (use a new method from the startup code instead)
+
 }
 
 impl Led {
-    pub fn new(port: GPIOPortName, pin: u32) -> Self {
-        Self { port, pin }
+    pub fn new(io: GPIO) -> Self {
+        Self { io }
     }
 
     pub unsafe fn init(&self) {
         unsafe {
-            gpio_set_pin_mode(self.port, self.pin, GPIOMode::Output);
-            gpio_set_output_type(self.port, self.pin, GPIOOutputType::PushPull);
+            self.io.set_pin_mode(GPIOMode::Output);
+            self.io.set_pin_output_type(GPIOOutputType::PushPull);
         }
     }
 
     pub fn on(&self) {
         unsafe {
-            gpio_set_pin_state(
-                self.port,
-                self.pin,
-                GPIOPinStateRequest::Set(GPIOPinState::High),
-            );
+            self.io
+                .set_pin_state(GPIOPinStateRequest::Set(GPIOPinState::High));
         }
     }
 
     pub fn off(&self) {
         unsafe {
-            gpio_set_pin_state(
-                self.port,
-                self.pin,
-                GPIOPinStateRequest::Set(GPIOPinState::Low),
-            );
+            self.io
+                .set_pin_state(GPIOPinStateRequest::Set(GPIOPinState::Low));
         }
     }
 
     pub fn toggle(&self) {
         unsafe {
-            gpio_set_pin_state(
-                self.port,
-                self.pin,
-                GPIOPinStateRequest::Toggle
-            );
+            self.io.set_pin_state(GPIOPinStateRequest::Toggle);
         }
     }
 }

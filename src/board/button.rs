@@ -1,4 +1,4 @@
-use crate::mcu::gpio::GPIOPortName;
+use crate::mcu::gpio::{GPIO, GPIOPort};
 
 pub enum ButtonName {
     User,
@@ -7,8 +7,7 @@ pub enum ButtonName {
 
 #[derive(Clone, Copy)]
 pub struct Button {
-    pub port: GPIOPortName,
-    pub pin: u32,
+    pub port: GPIO,
 }
 
 impl Button {
