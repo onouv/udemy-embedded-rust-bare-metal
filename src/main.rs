@@ -7,10 +7,11 @@ mod mcu;
 mod startup_stm32f303;
 mod utils;
 
-use board::{BLUE_LED, USER_BTN};
+use board::LD4;
 use core::panic::PanicInfo;
 
-const APP_INIT_FAILED: &str = "application init failed.";
+const LED_INIT_FAILED: &str = "led init failed.";
+const LED_ON_FAILED: &str = "turning led on failed";
 
 #[unsafe(no_mangle)]
 fn main() {
@@ -23,20 +24,24 @@ fn main() {
 
 unsafe fn init_application() {
     unsafe {
-        BLUE_LED.init().expect(APP_INIT_FAILED); // panic if we cannot init ourselves
-        BLUE_LED.on().expect(APP_INIT_FAILED);
+        LD4.init().expect(LED_INIT_FAILED); // panic if we cannot init ourselves
+        LD4.on().expect(LED_ON_FAILED);
     }
 }
 
 fn exti0_handler() {
-    BLUE_LED.toggle();
+    LD4.toggle();
 }
 
 #[panic_handler]
-fn panic_handler(_info: &PanicInfo) -> ! {
+fn panic_handler(info: &PanicInfo) -> ! {
     // TODO: on panic, try to turn on a red LED somehow
 
     // TODO: on panic: log the panic message somewhere
+    //let _msg = info.message().as_str().unwrap_or_else(|| {
+    //    loop {}
+    //}); 
+    
 
     // 3. good bye
     loop {}

@@ -25,7 +25,7 @@ pub unsafe fn set_bits(
     offset: u32,
     value_bit_length: u32,
 ) -> Result<(), MCUErrorCode> {
-    if offset < 32 {
+    if offset > 31 {
         return Err(MCU_ERR_INVALID_OFFSET);
     }
 
@@ -36,7 +36,7 @@ pub unsafe fn set_bits(
     unsafe {
         let old = read(address);
         let mask = ((1 << value_bit_length) - 1) << offset;
-        let update = bits::set(bits::clear(old, mask), (value << offset) & mask);
+        let update = bits::set(bits::clear(old, mask), mask);
         write(address, update);
     }
 

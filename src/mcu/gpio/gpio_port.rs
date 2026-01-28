@@ -6,11 +6,14 @@ pub enum GPIOPort {
     B,
     C,
     D,
+    E,
+    F
 }
 
 impl GPIOPort {
     /**
      * Translate to a valid base address as per RM0316, Table 4
+     * Note inconsistency of the RM0315 with UM1507 re. Port E.
      */
     pub fn as_ahb2_base_address(&self) -> RegisterAddress {
         match self {
@@ -18,6 +21,8 @@ impl GPIOPort {
             GPIOPort::B => 0x48000400 as RegisterAddress, 
             GPIOPort::C => 0x48000800 as RegisterAddress,
             GPIOPort::D => 0x48000C00 as RegisterAddress,
+            GPIOPort::E => 0x48001000 as RegisterAddress, // see comments above
+            GPIOPort::F => 0x48001400 as RegisterAddress
         }
     }
 
@@ -30,6 +35,8 @@ impl GPIOPort {
                     GPIOPort::B => 18,
                     GPIOPort::C => 19,
                     GPIOPort::D => 20,
+                    GPIOPort::E => 21,
+                    GPIOPort::F => 22
                 }
     }
 

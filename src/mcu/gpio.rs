@@ -47,7 +47,7 @@ impl GPIO {
             (self.port.as_ahb2_base_address() as u32 + GPIO_MODER_OFFSET) as RegisterAddress;
         let bit_len = GPIOMode::bit_len();
         let pin_bit_position: u32 = self.pin * bit_len;
-        let mode_value: u32 = mode.as_bit_value() << pin_bit_position;
+        let mode_value: u32 = mode.as_bit_value(); // << pin_bit_position;
 
         unsafe { register::set_bits(gpio_moder_addr, mode_value, pin_bit_position, bit_len) }
     }
@@ -55,7 +55,7 @@ impl GPIO {
     pub unsafe fn set_pin_output_type(&self, otype: GPIOOutputType) -> Result<(), MCUErrorCode> {
         let gpio_otyper_addr: RegisterAddress =
             (self.port.as_ahb2_base_address() as u32 + GPIO_OTYPER_OFFSET) as RegisterAddress;
-        let otype_value: u32 = otype.as_bit_value() << self.pin;
+        let otype_value: u32 = otype.as_bit_value(); // << self.pin;
 
         unsafe {
             register::set_bits(
@@ -129,7 +129,7 @@ impl GPIO {
     pub unsafe fn enable_clock(&self) -> Result<(), MCUErrorCode> {
         unsafe {
             register::set_bit(
-                self.port.as_ahb2_base_address(),
+                self.port.as_rcc_ahbenr_addr(),
                 self.port.as_rcc_ahbenr_bitpos(),
                 true,
             )?;
