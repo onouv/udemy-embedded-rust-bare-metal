@@ -43,14 +43,14 @@ pub unsafe fn set_bits(
     Ok(())
 }
 
-pub unsafe fn set_bit(address: RegisterAddress, bit_position: u32, value: bool) -> Result<(), MCUErrorCode> {
+pub unsafe fn set_bit(address: RegisterAddress, bit_position: u32, bit_is_high: bool) -> Result<(), MCUErrorCode> {
     if bit_position > 31 {
         return Err(MCU_ERR_INVALID_OFFSET);
     }
 
     unsafe {
         let register_val = read(address);
-        let update_val = if value {
+        let update_val = if bit_is_high {
             register_val | (1 << bit_position) 
         } else {
             register_val & !(1 << bit_position) 

@@ -1,3 +1,16 @@
+mod gpio_bits;
+pub mod gpio_mode;
+pub mod gpio_output_type;
+pub mod gpio_pin_state;
+pub mod gpio_port;
+
+pub use gpio_port::*;
+
+use gpio_bits::GPIOBits;
+use gpio_mode::*;
+use gpio_output_type::*;
+use gpio_pin_state::*;
+
 use super::error::*;
 use super::register::{self, RegisterAddress};
 use crate::utils::bits;
@@ -26,25 +39,23 @@ impl GPIO {
             return Err(MCU_ERR_INVALID_PIN);
         }
 
-        Ok(Self {
-            port,
-            pin,
-        })
+        Ok(Self { port, pin })
     }
 
     pub unsafe fn set_pin_mode(&self, mode: GPIOMode) -> Result<(), MCUErrorCode> {
-        let gpio_moder_addr = (self.port.as_ahb2_base_address() + GPIO_MODER_OFFSET) as RegisterAddress;
+        let gpio_moder_addr =
+            (self.port.as_ahb2_base_address() as u32 + GPIO_MODER_OFFSET) as RegisterAddress;
         let bit_len = GPIOMode::bit_len();
         let pin_bit_position: u32 = self.pin * bit_len;
-        let mode_value: u32 = mode.to_bit_value() << pin_bit_position;
+        let mode_value: u32 = mode.as_bit_value() << pin_bit_position;
 
         unsafe { register::set_bits(gpio_moder_addr, mode_value, pin_bit_position, bit_len) }
     }
 
     pub unsafe fn set_pin_output_type(&self, otype: GPIOOutputType) -> Result<(), MCUErrorCode> {
         let gpio_otyper_addr: RegisterAddress =
-            (self.port.as_ahb2_base_address() + GPIO_OTYPER_OFFSET) as RegisterAddress;
-        let otype_value: u32 = otype.to_bit_value() << self.pin;
+            (self.port.as_ahb2_base_address() as u32 + GPIO_OTYPER_OFFSET) as RegisterAddress;
+        let otype_value: u32 = otype.as_bit_value() << self.pin;
 
         unsafe {
             register::set_bits(
@@ -76,18 +87,20 @@ impl GPIO {
         unsafe {
             match request {
                 GPIOPinStateRequest::Set(state) => {
-                    let gpio_bsrr_addr =
-                        (self.port.as_ahb2_base_address() + GPIO_BSRR_OFFSET) as RegisterAddress;
+                    let gpio_bsrr_addr = (self.port.as_ahb2_base_address() as u32
+                        + GPIO_BSRR_OFFSET)
+                        as RegisterAddress;
                     let gpio_bsrr_value = match state {
-                        GPIOPinState::High => state.to_bit_value() << self.pin,
-                        GPIOPinState::Low => state.to_bit_value() << (self.pin + 16),
+                        GPIOPinState::High => state.as_bit_value() << self.pin,
+                        GPIOPinState::Low => state.as_bit_value() << (self.pin + 16),
                     };
-                    register::write(gpio_bsrr_addr, state.to_bit_value() << self.pin);
+                    register::write(gpio_bsrr_addr, state.as_bit_value() << self.pin);
                 }
 
                 GPIOPinStateRequest::Toggle => {
-                    let gpio_bsrr_addr =
-                        (self.port.as_ahb2_base_address() + GPIO_BSRR_OFFSET) as RegisterAddress;
+                    let gpio_bsrr_addr = (self.port.as_ahb2_base_address() as u32
+                        + GPIO_BSRR_OFFSET)
+                        as RegisterAddress;
                     let mut gpio_odr_value = register::read(gpio_bsrr_addr);
                     let gpio_pin_mask = GPIOPinState::bit_mask() << self.pin;
                     let pin_bit = bits::get(gpio_odr_value, gpio_pin_mask, self.pin);
@@ -113,121 +126,15 @@ impl GPIO {
         Ok(())
     }
 
-    pub unsafe fn enable_clock(&self) {
-        let rcc_ahbenr_addr = (self.port.as_ahb2_base_address()) as RegisterAddress;
-    }
-}
-
-#[derive(Clone, Copy)]
-pub enum GPIOPort {
-    A,
-    B,
-    C,
-    D,
-}
-
-impl GPIOPort {
-    /**
-     * Translate to a valid base address as per RM0316, Table 4
-     */
-    pub fn as_ahb2_base_address(&self) -> u32 {
-        match self {
-            GPIOPort::A => 0x48000000,
-            GPIOPort::B => 0x48000400,
-            GPIOPort::C => 0x48000800,
-            GPIOPort::D => 0x48000C00,
+    pub unsafe fn enable_clock(&self) -> Result<(), MCUErrorCode> {
+        unsafe {
+            register::set_bit(
+                self.port.as_ahb2_base_address(),
+                self.port.as_rcc_ahbenr_bitpos(),
+                true,
+            )?;
         }
+
+        Ok(())
     }
-
-    /**
-     * Return bit position within the AHB peripheral clock endable register RCC_AHBENR 
-     */
-    pub fn as_rcc_ahbenr_bitpos(&self) -> u32 {
-        match self {
-                    GPIOPort::A => 17,
-                    GPIOPort::B => 18,
-                    GPIOPort::C => 19,
-                    GPIOPort::D => 20,
-                }
-    }
-
-    /**
-     * Return address of the AHB peripheral clock endable register RCC_AHBENR 
-     */
-    pub fn as_rcc_ahbenr_addr(&self) -> RegisterAddress {
-        (0x4002_1000 + 0x14) as RegisterAddress
-    }
-}
-
-trait GPIOBits {
-    fn to_bit_value(&self) -> u32;
-
-    // overwrite this, if the bits must take more than one bit
-    fn bit_mask() -> u32 {
-        0x1
-    }
-
-    // overwrite this, if the bits must take more than one bit
-    fn bit_len() -> u32 {
-        0x1
-    }
-}
-
-pub enum GPIOMode {
-    Output,
-    Input,
-    AlternateFunction,
-    AnalogMode,
-}
-
-impl GPIOBits for GPIOMode {
-    fn to_bit_value(&self) -> u32 {
-        match self {
-            GPIOMode::Input => 0x00,
-            GPIOMode::Output => 0x01,
-            GPIOMode::AlternateFunction => 0x10,
-            GPIOMode::AnalogMode => 0x11,
-        }
-    }
-
-    fn bit_mask() -> u32 {
-        0x03
-    }
-
-    fn bit_len() -> u32 {
-        2 // each MODER(pin) has 2 bits
-    }
-}
-
-pub enum GPIOOutputType {
-    PushPull,
-    OpenDrain,
-}
-
-impl GPIOBits for GPIOOutputType {
-    fn to_bit_value(&self) -> u32 {
-        match self {
-            GPIOOutputType::OpenDrain => 0x1,
-            GPIOOutputType::PushPull => 0x0,
-        }
-    }
-}
-
-pub enum GPIOPinState {
-    High,
-    Low,
-}
-
-impl GPIOBits for GPIOPinState {
-    fn to_bit_value(&self) -> u32 {
-        match self {
-            GPIOPinState::High => 0x01,
-            GPIOPinState::Low => 0x00,
-        }
-    }
-}
-
-pub enum GPIOPinStateRequest {
-    Set(GPIOPinState),
-    Toggle,
 }
