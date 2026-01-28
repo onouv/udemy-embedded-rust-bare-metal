@@ -1,7 +1,7 @@
 mod gpio_bits;
 pub mod gpio_mode;
 pub mod gpio_output_type;
-pub mod gpio_pin_state;
+pub mod gpio_pin;
 pub mod gpio_port;
 
 pub use gpio_port::*;
@@ -9,10 +9,11 @@ pub use gpio_port::*;
 use gpio_bits::GPIOBits;
 use gpio_mode::*;
 use gpio_output_type::*;
-use gpio_pin_state::*;
+use gpio_pin::*;
 
 use super::error::*;
 use super::register::{self, RegisterAddress};
+use crate::mcu::rrc::PeripheralClock;
 use crate::utils::bits;
 
 // Offsets onto port x base address for GPIOx control registers (x = A to D)
@@ -28,20 +29,15 @@ const GPIO_BSRR_OFFSET: u32 = 0x18; // port bit set/reset register (RM0316 11.4.
 
 #[derive(Clone, Copy)]
 #[allow(clippy::upper_case_acronyms)] // term from STM32 reference manual 
-pub struct GPIO {
+pub struct GPIO<'a> {
     pub port: GPIOPort, // TODO: these are public, only so GPIO can be const (use a new method from the startup code instead)
     pub pin: u32,
+    pub mode: GPIOMode,
+    pub otype: GPIOOutputType,
+    pub clock: PeripheralClock<'a>, 
 }
 
-impl GPIO {
-    pub fn new(port: GPIOPort, pin: u32) -> Result<Self, MCUErrorCode> {
-        if pin > 15 {
-            return Err(MCU_ERR_INVALID_PIN);
-        }
-
-        Ok(Self { port, pin })
-    }
-
+impl GPIO<'_> {
     pub unsafe fn set_pin_mode(&self, mode: GPIOMode) -> Result<(), MCUErrorCode> {
         let gpio_moder_addr =
             (self.port.as_ahb2_base_address() as u32 + GPIO_MODER_OFFSET) as RegisterAddress;

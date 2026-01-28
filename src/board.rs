@@ -3,10 +3,12 @@ pub mod button;
 
 use button::Button;
 use led::Led;
-use crate::mcu::gpio::{ GPIO, GPIOPort };
+use crate::mcu::{ gpio::{ GPIO, GPIOPort}, rrc::PeripheralClock  };
 
 
 // TODO: make these thread safe
+const RRC_CLOCK: PeripheralClock = PeripheralClock { gpios: [None; 6] };
+
 
 
 //======================================================

@@ -1,5 +1,7 @@
 use super::gpio_bits::GPIOBits;
 
+
+#[derive(Clone, Copy)]
 pub enum GPIOOutputType {
     PushPull,
     OpenDrain,

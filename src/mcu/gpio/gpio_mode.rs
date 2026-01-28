@@ -1,5 +1,6 @@
 use super::gpio_bits::GPIOBits;
 
+#[derive(Clone, Copy)]
 pub enum GPIOMode {
     Output,
     Input,
