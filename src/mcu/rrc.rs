@@ -1,20 +1,20 @@
 use super::gpio::{GPIO, GPIOPort};
-use crate::mcu::error::MCU_ERR_INVALID_PIN;
+use crate::mcu::error::{MCU_ERR_INVALID_PIN, MCU_ERR_PORT_UNREGISTERED};
 
 #[derive(Clone, Copy)]
-pub struct PeripheralClock<'a> {
+pub struct PeripheralClock {
     // TODO: use an associative data structure, map. etc.
     // TODO: create via new(..) in startup routine
-    pub gpios: [Option<&'a GPIO<'a>>; 6],
+    pub gpios: [Option<GPIOPort>; 6],
 }
 
-impl PeripheralClock<'_> {
+impl PeripheralClock {
     pub fn attach(&self, gpio: &GPIO) -> Result<(), MCUErrorCode> {
         if self.gpio_pre_registered(gpio.port) {
             return Err(MCU_ERR_INVALID_PIN);
         }
 
-        self.gpios[self.get_index(gpio.port)] = Some(gpio);
+        self.gpios[self.get_index(gpio.port)] = Some(gpio.port);
 
         Ok(())
     }
@@ -37,7 +37,13 @@ impl PeripheralClock<'_> {
         }
     }
 
-    pub fn enable(port: GPIOPort) -> Result<(), MCUErrorCode> {
+    pub fn enable(&self, port: GPIOPort) -> Result<(), MCUErrorCode> {
+        let p = self.gpios[self.get_index(port)];
+
+        if p.is_none() {
+            return Err(MCU_ERR_PORT_UNREGISTERED);
+        }
+
         // TODO: write into GPIOx_AHBENR
 
         Ok(())
