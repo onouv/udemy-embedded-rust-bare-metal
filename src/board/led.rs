@@ -9,7 +9,7 @@ pub struct Led {
 }
 
 impl Led {
-    pub fn new(io: GPIO) -> Self {
+    pub const fn new(io: GPIO) -> Self {
         Self { io }
     }
 

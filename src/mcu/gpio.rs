@@ -2,7 +2,6 @@ mod gpio_bits;
 pub mod gpio_mode;
 pub mod gpio_output_type;
 pub mod gpio_pin;
-pub mod gpio_port;
 
 pub use gpio_port::*;
 
@@ -27,18 +26,47 @@ const GPIO_IDR_OFFSET: u32 = 0x10; // input data register (RM0316 11.4.5)
 const GPIO_ODR_OFFSET: u32 = 0x14; // output data register (RM0316 11.4.6)
 const GPIO_BSRR_OFFSET: u32 = 0x18; // port bit set/reset register (RM0316 11.4.7)
 
-#[derive(Clone, Copy)]
-#[allow(clippy::upper_case_acronyms)] // term from STM32 reference manual 
-pub struct GPIO<'a> {
-    pub port: GPIOPort, // TODO: these are public, only so GPIO can be const (use a new method from the startup code instead)
-    pub pin: u32,
-    pub mode: GPIOMode,
-    pub otype: GPIOOutputType,
-    pub clock: PeripheralClock<'a>, 
+#[derive(Clone, Copy, PartialEq)]
+pub enum GPIO {
+    A,
+    B,
+    C,
+    D,
+    E,
+    F
 }
 
-impl GPIO<'_> {
-    pub unsafe fn set_pin_mode(&self, mode: GPIOMode) -> Result<(), MCUErrorCode> {
+//#[derive(Clone, Copy)]
+#[allow(clippy::upper_case_acronyms)] // term from STM32 reference manual 
+pub struct GPIOPort {
+    id: GPIO,
+    pin: u32,
+}
+
+pub struct InputPort {
+    gpio: GPIOPort
+}
+
+
+impl GPIOPort {
+    pub const fn new(id: GPIO, pin: u32) -> Self {
+        Self {
+            id, pin
+        }
+    }
+
+    pub fn id(&self) -> GPIO {
+        return self.id
+    }
+
+    pub fn to_input(self) -> InputPort {
+        InputPort { gpio: self }        
+    } 
+
+    
+}
+
+/*     pub unsafe fn set_pin_mode(&self, mode: GPIOMode) -> Result<(), MCUErrorCode> {
         let gpio_moder_addr =
             (self.port.as_ahb2_base_address() as u32 + GPIO_MODER_OFFSET) as RegisterAddress;
         let bit_len = GPIOMode::bit_len();
@@ -120,17 +148,4 @@ impl GPIO<'_> {
             }
         }
         Ok(())
-    }
-
-    pub unsafe fn enable_clock(&self) -> Result<(), MCUErrorCode> {
-        unsafe {
-            register::set_bit(
-                self.port.as_rcc_ahbenr_addr(),
-                self.port.as_rcc_ahbenr_bitpos(),
-                true,
-            )?;
-        }
-
-        Ok(())
-    }
-}
+    } */

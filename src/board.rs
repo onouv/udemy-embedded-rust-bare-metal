@@ -3,13 +3,50 @@ pub mod button;
 
 use button::Button;
 use led::Led;
-use crate::mcu::{ gpio::{ GPIO, GPIOPort}, rrc::PeripheralClock  };
+use crate::mcu::{ gpio::{self, GPIOPort, GPIO}, rrc::PeripheralClock  };
+
+pub enum BoardErrorCode {
+    ResourceTaken
+}
+
+pub struct Board {
+    rcc: Option<PeripheralClock>,
+    gpios: [Option<GPIOPort>; 2],
+} 
+
+impl Board {
+    
+    pub fn take_rcc(&mut self) -> Result<PeripheralClock, BoardErrorCode> {
+        if self.rcc.is_none() {
+            return Err(BoardErrorCode::ResourceTaken);
+        }
+
+        Ok(self.rcc.take().unwrap())
+    }
+
+    fn take_port(&mut self, id: GPIO) -> Result<GPIOPort, BoardErrorCode> {
+        let mut gopt: Option<GPIOPort>;
+        let mut idx: usize = 0;
+
+        while idx < self.gpios.len() {
+            let p = &self.gpios[idx];
+            if let Some(port) = p.as_ref() {
+                if port.id() == id {
+                    return Ok(self.gpios[idx].take().unwrap());
+                }
+            }
+        }
+
+        Err(BoardErrorCode::ResourceTaken)
+        
+    }
+}
 
 
-// TODO: make these thread safe
-const RRC_CLOCK: PeripheralClock = PeripheralClock { gpios: [None; 6] };
-
-
+static mut BOARD: Board = Board {
+    rcc: Some(PeripheralClock::new()),
+    gpios: [Some(GPIOPort::new(GPIO::A, 0)), Some(GPIOPort::new(GPIO::E, 8))],
+};
 
 //======================================================
 //  GPIOE

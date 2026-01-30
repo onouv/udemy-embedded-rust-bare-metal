@@ -15,15 +15,19 @@ const LED_ON_FAILED: &str = "turning led on failed";
 
 #[unsafe(no_mangle)]
 fn main() {
+    let rcc = unsafe { BOARD.take_rcc().expect("taking rcc failed") };
+    let gpioe = unsafe { BOARD.take_port(mcu::gpio::GPIO).expect("taking gpioe failed") };
+    gpioe.enable_clock(&rcc).expect("enabling gpioe clock failed");
+
     unsafe {
         init_application();
-    }
-
+    } 
     loop {}
 }
 
 unsafe fn init_application() {
     unsafe {
+
         LD4.init().expect(LED_INIT_FAILED); // panic if we cannot init ourselves
         LD4.on().expect(LED_ON_FAILED);
     }
