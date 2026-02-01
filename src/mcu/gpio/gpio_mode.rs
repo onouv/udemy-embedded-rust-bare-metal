@@ -1,4 +1,4 @@
-use super::gpio_bits::GPIOBits;
+use crate::mcu::bitwise::Bitwise;
 
 #[derive(Clone, Copy)]
 pub enum GPIOMode {
@@ -8,21 +8,13 @@ pub enum GPIOMode {
     AnalogMode,
 }
 
-impl GPIOBits for GPIOMode {
-    fn as_bit_value(&self) -> u32 {
+impl Bitwise for GPIOMode {
+    fn as_bit_pattern(&self) -> (u32, u32) {
         match self {
-            GPIOMode::Input => 0x00,
-            GPIOMode::Output => 0x01,
-            GPIOMode::AlternateFunction => 0x10,
-            GPIOMode::AnalogMode => 0x11,
+            GPIOMode::Input => (0x00, 2),
+            GPIOMode::Output => (0x01, 2),
+            GPIOMode::AlternateFunction => (0x10, 2),
+            GPIOMode::AnalogMode => (0x11, 2)
         }
-    }
-
-    fn bit_mask() -> u32 {
-        0x03
-    }
-
-    fn bit_len() -> u32 {
-        2 // each MODER(pin) has 2 bits
     }
 }

@@ -1,5 +1,4 @@
-use super::gpio_bits::GPIOBits;
-
+use crate::mcu::bitwise::Bitwise;
 
 #[derive(Clone, Copy)]
 pub enum GPIOOutputType {
@@ -7,11 +6,11 @@ pub enum GPIOOutputType {
     OpenDrain,
 }
 
-impl GPIOBits for GPIOOutputType {
-    fn as_bit_value(&self) -> u32 {
+impl Bitwise for GPIOOutputType {
+    fn as_bit_pattern(&self) -> (u32, u32) {
         match self {
-            GPIOOutputType::OpenDrain => 0x1,
-            GPIOOutputType::PushPull => 0x0,
+            GPIOOutputType::OpenDrain => (0x1, 0x1),
+            GPIOOutputType::PushPull => (0x0, 0x1),
         }
     }
 }
