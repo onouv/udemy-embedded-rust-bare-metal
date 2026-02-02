@@ -1,6 +1,7 @@
+use crate::mcu::OutputPort;
 
-#[derive(Clone, Copy)]
 pub struct Led {
+    port: OutputPort
 }
 
 

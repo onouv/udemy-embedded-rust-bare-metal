@@ -1,12 +1,11 @@
-pub mod button;
-pub mod led;
+mod button;
+mod led;
 
-use crate::mcu::gpio::{GPIO, GPIOId};
+use crate::mcu::{GPIO, GPIOId};
+use super::mcu::Port;
 
-use super::mcu::gpio::port::Port;
-
-use button::Button;
-use led::Led;
+pub use button::Button;
+pub use led::Led;
 
 #[derive(Debug)]
 pub enum BoardError {

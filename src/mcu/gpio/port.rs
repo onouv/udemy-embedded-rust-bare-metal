@@ -6,15 +6,16 @@ mod output_type_util;
 use crate::mcu::{
     MCUError, 
     gpio::{
-        GPIO, GPIOId, port::{
-            input_port::InputPort, 
-            output_port::OutputPort,
-        }
+        GPIO, 
+        GPIOId
     }
 };
 
+pub(crate) use input_port::InputPort;
+pub(crate) use output_port::OutputPort;
+
 #[derive(Clone, Copy)]
-pub struct Port {
+pub(crate) struct Port {
     pub gpio: GPIO,
 }
 

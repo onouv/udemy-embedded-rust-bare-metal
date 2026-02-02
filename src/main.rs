@@ -9,7 +9,7 @@ mod utils;
 
 use board::BOARD;
 use core::panic::PanicInfo;
-use mcu::gpio::{GPIO, GPIOId};
+use mcu::{GPIO, GPIOId};
 const LED_INIT_FAILED: &str = "led init failed.";
 const LED_ON_FAILED: &str = "turning led on failed";
 

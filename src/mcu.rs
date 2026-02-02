@@ -1,7 +1,10 @@
-pub mod gpio;
-pub mod rcc;
+mod gpio;
+mod rcc;
 mod register;
 mod bitwise;
+
+pub(crate) use gpio::{GPIO, GPIOId};
+pub(crate) use gpio::port::{Port, InputPort, OutputPort};
 
 //===============================================
 // Device-specific constants, so these can be 
