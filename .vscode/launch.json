@@ -3,9 +3,9 @@
     "configurations": [
 
         {
-            "name": "Cortex Debug",
+            "name": "STM32F303 Debug",
             "cwd": "${workspaceFolder}",
-            "executable": "${workspaceFolder}/target/thumbv7em-none-eabihf/debug/learn_0",
+            "executable": "${workspaceFolder}/target/thumbv7em-none-eabihf/debug/led-button",
             "request": "launch",
             "type": "cortex-debug",
             "runToEntryPoint": "main",

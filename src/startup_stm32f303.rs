@@ -36,7 +36,7 @@ unsafe extern "C" {
     fn DMA2_CH3_Handler();
     fn DMA2_CH4_Handler();
     fn DMA2_CH5_Handler();
-    fn EXTI0_Handler();
+    fn exti0_handler();
     fn EXTI15_10_Handler();
     fn EXTI1_Handler();
     fn EXTI2_TSC_Handler();
@@ -128,7 +128,7 @@ static VECTOR_TABLE: [Option<unsafe extern "C" fn()>; 100] = [
     Some(RTC_WKUP_Handler),
     Some(FLASH_Handler),
     Some(RCC_Handler),
-    Some(EXTI0_Handler),
+    Some(exti0_handler),
     Some(EXTI1_Handler),
     Some(EXTI2_TSC_Handler),
     Some(EXTI3_Handler),

@@ -2,41 +2,39 @@
 #![no_main]
 #![allow(clippy::empty_loop, unused)]
 
-use core::panic::PanicInfo;
-
+mod board;
+mod mcu;
 mod startup_stm32f303;
+mod utils;
 
-// initialized data -> .data
-static mut SCORES: [i32; 5] = [1, 2, 3, 4, 5];
-
-// constant data -> .rodata
-const _NUMBERS: [i32; 5] = [1, 2, 3, 4, 5];
-
-// uninitialized array -> .bss
-static mut _BUFFER: [u8; 1024] = [0; 1024];
-
+use board::BOARD;
+use core::panic::PanicInfo;
+use mcu::{GPIO, GPIOId};
+const LED_INIT_FAILED: &str = "led init failed.";
+const LED_ON_FAILED: &str = "turning led on failed";
 
 #[unsafe(no_mangle)]
 fn main() {
-
-    let mut total_score = 0;
-
+    #[allow(static_mut_refs)] // ...since we are implementing a singleton pattern in take_port()
+    let gpioe = unsafe { BOARD.take_port(GPIOId::A, 8).unwrap().to_input().unwrap() };
     unsafe {
-        for score in SCORES {
-            total_score += score;
-        }
+        gpioe.init().expect("gpioe init failed");
     }
-
-    unsafe {
-        _BUFFER[0] = 100;
-    }
-
-    loop {
-
-    }
+    
+    loop {}
 }
 
+fn exti0_handler() {}
+
 #[panic_handler]
-fn panic_handler(_info: &PanicInfo) -> ! {
+fn panic_handler(info: &PanicInfo) -> ! {
+    // TODO: on panic, try to turn on a red LED somehow
+
+    // TODO: on panic: log the panic message somewhere
+    //let _msg = info.message().as_str().unwrap_or_else(|| {
+    //    loop {}
+    //});
+
+    // 3. good bye
     loop {}
 }
