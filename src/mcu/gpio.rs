@@ -1,7 +1,6 @@
-pub mod port;
-pub mod gpio_mode;
-mod gpio_output_type;
+mod port;
 
+pub(crate) use port::*;
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum GPIOId {

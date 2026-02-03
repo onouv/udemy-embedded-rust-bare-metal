@@ -20,8 +20,8 @@ impl Board {
     pub fn take_port(&mut self, port: GPIOId, pin: u8) -> Result<Port, BoardError> {
         let idx = match (port, pin) {
             // to save memory, match only all the permutations you actually need
-            (GPIOId::A, 8) => 0,
-            (GPIOId::B, 13) => 1,
+            (GPIOId::A, 0) => 0,
+            (GPIOId::E, 8) => 1,
             _ => {
                 return Err(BoardError::InvalidGPIO);
             }
@@ -40,15 +40,14 @@ pub static mut BOARD: Board = Board {
         Some(Port {
             gpio: GPIO {
                 id: GPIOId::A,
-                pin: 8,
+                pin: 0,
             },
         }),
         Some(Port {
             gpio: GPIO {
-                id: GPIOId::A,
-                pin: 13,
+                id: GPIOId::E,
+                pin: 8,
             },
         }),
     ],
 };
-

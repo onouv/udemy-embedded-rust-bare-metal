@@ -1,18 +1,17 @@
 mod input_port;
 mod output_port;
-mod port_mode_util;
-mod output_type_util;
+mod output_type;
+mod port_mode;
 
-use crate::mcu::{
-    MCUError, 
-    gpio::{
-        GPIO, 
-        GPIOId
-    }
+use super::super::{
+    MCUError,
+    gpio::{GPIO, GPIOId},
 };
 
 pub(crate) use input_port::InputPort;
 pub(crate) use output_port::OutputPort;
+pub(crate) use output_type::{OutputType, OutputTypeUtil};
+pub(crate) use port_mode::{PortMode, PortModeUtil};
 
 #[derive(Clone, Copy)]
 pub(crate) struct Port {
@@ -20,11 +19,11 @@ pub(crate) struct Port {
 }
 
 impl Port {
-    pub fn to_input(self) -> Result<InputPort, MCUError> {
+    pub fn to_input(self) -> InputPort {
         InputPort::new(self.gpio)
     }
 
-    pub fn to_output(self) -> Result<OutputPort, MCUError> {
+    pub fn to_output(self) -> OutputPort {
         OutputPort::new(self.gpio)
     }
 }

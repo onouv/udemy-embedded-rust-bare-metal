@@ -1,9 +1,10 @@
 use crate::mcu::{
-    FAKE_ADDR, GPIOA_BSRR_ADDR, GPIOA_MODER_ADDR, GPIOA_ODR_ADDR, GPIOA_OTYPER_ADDR, MCUError,
+    MCUError,
     gpio::{
-        GPIO, GPIOId, gpio_mode::GPIOMode, gpio_output_type::GPIOOutputType,
-        port::port_mode_util::PortModeUtil,
+        GPIO, GPIOId,
+        port::{OutputType, OutputTypeUtil, PortMode, PortModeUtil},
     },
+    gpio_addresses::*,
     rcc::RCCUtil,
     register::{Address, Register},
 };
@@ -28,29 +29,50 @@ impl OutputPort {
      * a GPIO port later. Note this is the only way to create
      * an OutputPort.
      *
-     * Since we are only returning ports actually used in our
-     * system, we must indicate request for unused ports as
-     * Err(MCUError::InvalidPort)
      */
-    pub fn new(gpio: GPIO) -> Result<Self, MCUError> {
+    pub fn new(gpio: GPIO) -> Self {
         let moder_addr = match gpio.id {
             GPIOId::A => GPIOA_MODER_ADDR,
-            _ => FAKE_ADDR as Address, // fake for demo
+            GPIOId::B => GPIOB_MODER_ADDR,
+            GPIOId::C => GPIOC_MODER_ADDR,
+            GPIOId::D => GPIOC_MODER_ADDR,
+            GPIOId::E => GPIOC_MODER_ADDR,
+            GPIOId::F => GPIOF_MODER_ADDR,
         };
 
         let odr_addr = match gpio.id {
             GPIOId::A => GPIOA_ODR_ADDR,
-            _ => FAKE_ADDR, // fake for demo
+            GPIOId::B => GPIOB_ODR_ADDR,
+            GPIOId::C => GPIOC_ODR_ADDR,
+            GPIOId::D => GPIOC_ODR_ADDR,
+            GPIOId::E => GPIOC_ODR_ADDR,
+            GPIOId::F => GPIOF_ODR_ADDR,
         };
 
+        let idr_addr = match gpio.id {
+            GPIOId::A => GPIOA_IDR_ADDR,
+            GPIOId::B => GPIOB_IDR_ADDR,
+            GPIOId::C => GPIOC_IDR_ADDR,
+            GPIOId::D => GPIOC_IDR_ADDR,
+            GPIOId::E => GPIOC_IDR_ADDR,
+            GPIOId::F => GPIOF_IDR_ADDR,
+        };
         let otyper_addr = match gpio.id {
             GPIOId::A => GPIOA_OTYPER_ADDR,
-            _ => FAKE_ADDR,
+            GPIOId::B => GPIOB_OTYPER_ADDR,
+            GPIOId::C => GPIOC_OTYPER_ADDR,
+            GPIOId::D => GPIOC_OTYPER_ADDR,
+            GPIOId::E => GPIOC_OTYPER_ADDR,
+            GPIOId::F => GPIOF_OTYPER_ADDR,
         };
 
         let bsrr_addr = match gpio.id {
             GPIOId::A => GPIOA_BSRR_ADDR,
-            _ => FAKE_ADDR,
+            GPIOId::B => GPIOB_BSRR_ADDR,
+            GPIOId::C => GPIOC_BSRR_ADDR,
+            GPIOId::D => GPIOC_BSRR_ADDR,
+            GPIOId::E => GPIOC_BSRR_ADDR,
+            GPIOId::F => GPIOF_BSRR_ADDR,
         };
 
         let mode_reg = Register::new(moder_addr);
@@ -58,31 +80,23 @@ impl OutputPort {
         let outp_type_reg = Register::new(otyper_addr);
         let bit_set_reset_reg = Register::new(bsrr_addr);
 
-        if moder_addr == FAKE_ADDR
-            || odr_addr == FAKE_ADDR
-            || otyper_addr == FAKE_ADDR
-            || bsrr_addr == FAKE_ADDR
-        {
-            return Err(MCUError::InvalidGPIO);
-        }
-
-        Ok(Self {
+        Self {
             gpio,
             mode_reg,
             outp_type_reg,
             outp_data_reg,
             bit_set_reset_reg,
-        })
+        }
     }
 
     /**
      * Initialize the port by manipulating the GPIO Port
      **/
-    pub unsafe fn init(&self, otype: GPIOOutputType) -> Result<(), MCUError> {
+    pub unsafe fn init(&self, otype: OutputType) -> Result<(), MCUError> {
         // println!("OutputPort {:?} does the bitwise reg manips to init for '{:?}'", self.gpio, otype);
         unsafe {
             self.enable_peripheral_clock(self.gpio.id)?;
-            self.set_mode(&self.mode_reg, self.gpio, GPIOMode::Input)?;
+            self.set_mode(&self.mode_reg, self.gpio, PortMode::Input)?;
         }
 
         Ok(())

@@ -9,18 +9,21 @@ mod utils;
 
 use board::BOARD;
 use core::panic::PanicInfo;
-use mcu::{GPIO, GPIOId};
+use mcu::{GPIO, GPIOId, OutputType};
 const LED_INIT_FAILED: &str = "led init failed.";
 const LED_ON_FAILED: &str = "turning led on failed";
 
 #[unsafe(no_mangle)]
 fn main() {
     #[allow(static_mut_refs)] // ...since we are implementing a singleton pattern in take_port()
-    let gpioe = unsafe { BOARD.take_port(GPIOId::A, 8).unwrap().to_input().unwrap() };
     unsafe {
-        gpioe.init().expect("gpioe init failed");
+        let pa0 = BOARD.take_port(GPIOId::A, 0).unwrap().to_input();
+        pa0.init().expect("GPIOA init failed for pin 0");
+
+        let pe8 = BOARD.take_port(GPIOId::E, 8).unwrap().to_output();
+        pe8.init(OutputType::PushPull).expect("GPIOE init failed for pin 8");
     }
-    
+
     loop {}
 }
 

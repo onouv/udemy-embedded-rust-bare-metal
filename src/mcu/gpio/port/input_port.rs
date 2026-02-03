@@ -1,6 +1,8 @@
+use super::PortModeUtil;
 use super::{GPIO, GPIOId};
-use crate::mcu::{FAKE_ADDR, GPIOA_IDR_ADDR, GPIOA_MODER_ADDR, MCUError, gpio::gpio_mode::GPIOMode, rcc::RCCUtil, register::Register};
-use super::port_mode_util::PortModeUtil;
+use crate::mcu::{
+    MCUError, gpio::port::PortMode, gpio_addresses::*, rcc::RCCUtil, register::Register,
+};
 
 pub(crate) struct InputPort {
     pub(crate) gpio: GPIO,
@@ -18,33 +20,34 @@ impl InputPort {
      * a GPIO port later. Note this is the only way to create
      * an OutputPort.
      *
-     * Since we are only returning ports actually used in our
-     * system, we must indicate request for unused ports as
-     * Err(MCUError::InvalidPort)
      */
-    pub fn new(gpio: GPIO) -> Result<Self, MCUError> {
+    pub fn new(gpio: GPIO) -> Self {
         let moder_addr = match gpio.id {
             GPIOId::A => GPIOA_MODER_ADDR,
-            _ => FAKE_ADDR,
+            GPIOId::B => GPIOB_MODER_ADDR,
+            GPIOId::C => GPIOC_MODER_ADDR,
+            GPIOId::D => GPIOD_MODER_ADDR,
+            GPIOId::E => GPIOE_MODER_ADDR,
+            GPIOId::F => GPIOF_MODER_ADDR,
         };
 
         let idr_addr = match gpio.id {
             GPIOId::A => GPIOA_IDR_ADDR,
-            _ => FAKE_ADDR,
+            GPIOId::B => GPIOB_IDR_ADDR,
+            GPIOId::C => GPIOC_IDR_ADDR,
+            GPIOId::D => GPIOC_IDR_ADDR,
+            GPIOId::E => GPIOC_IDR_ADDR,
+            GPIOId::F => GPIOF_IDR_ADDR,
         };
-
-        if moder_addr == FAKE_ADDR || idr_addr == FAKE_ADDR {
-            return Err(MCUError::InvalidGPIO);
-        }
 
         let mode_reg = Register::new(moder_addr);
         let inp_data_reg = Register::new(idr_addr);
 
-        Ok(Self {
+        Self {
             gpio,
             mode_reg,
             inp_data_reg,
-        })
+        }
     }
 
     /**
@@ -53,7 +56,7 @@ impl InputPort {
     pub unsafe fn init(&self) -> Result<(), MCUError> {
         unsafe {
             self.enable_peripheral_clock(self.gpio.id)?;
-            self.set_mode(&self.mode_reg, self.gpio, GPIOMode::Input)?
+            self.set_mode(&self.mode_reg, self.gpio, PortMode::Input)?
         }
 
         Ok(())
