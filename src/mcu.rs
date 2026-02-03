@@ -3,8 +3,8 @@ mod gpio;
 mod rcc;
 mod register;
 
-pub(crate) use gpio::{InputPort, OutputPort, Port, OutputType };
 pub(crate) use gpio::{GPIO, GPIOId};
+pub(crate) use gpio::{InputPort, OutputPort, OutputType, Port};
 pub(crate) use register::Register;
 
 //===============================================
@@ -39,7 +39,6 @@ mod gpio_addresses {
     pub const GPIOB_ODR_ADDR: Address = 0x4800_0414 as Address; // output data register
     pub const GPIOB_BSRR_ADDR: Address = 0x4800_0418 as Address; // bit set/reset register
 
-
     pub const GPIOC_BASE_ADDR: Address = 0x4800_0800 as Address;
     pub const GPIOC_MODER_ADDR: Address = GPIOC_BASE_ADDR; // port mode register
     pub const GPIOC_OTYPER_ADDR: Address = 0x4800_0804 as Address;
@@ -48,7 +47,6 @@ mod gpio_addresses {
     pub const GPIOC_IDR_ADDR: Address = 0x4800_0810 as Address; // input data register    
     pub const GPIOC_ODR_ADDR: Address = 0x4800_0814 as Address; // output data register
     pub const GPIOC_BSRR_ADDR: Address = 0x4800_0818 as Address; // bit set/reset register
-
 
     pub const GPIOD_BASE_ADDR: Address = 0x4800_0C00 as Address;
     pub const GPIOD_MODER_ADDR: Address = GPIOD_BASE_ADDR; // port mode register
@@ -76,7 +74,6 @@ mod gpio_addresses {
     pub const GPIOF_IDR_ADDR: Address = 0x4800_1410 as Address; // input data register    
     pub const GPIOF_ODR_ADDR: Address = 0x4800_1414 as Address; // output data register
     pub const GPIOF_BSRR_ADDR: Address = 0x4800_1418 as Address; // bit set/reset register
-
 }
 //===============================================
 // Common types

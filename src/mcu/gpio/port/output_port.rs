@@ -11,7 +11,7 @@ use crate::mcu::{
 
 pub struct OutputPort {
     gpio: GPIO,
-    mode_reg: Register,
+             mode_reg: Register,
     outp_type_reg: Register,
     outp_data_reg: Register,
     bit_set_reset_reg: Register,
