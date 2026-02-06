@@ -27,3 +27,4 @@ impl Port {
         OutputPort::new(self.gpio)
     }
 }
+

@@ -3,6 +3,7 @@
 #![allow(clippy::empty_loop, unused)]
 
 mod board;
+mod smart_board;
 mod mcu;
 mod startup_stm32f303;
 mod utils;

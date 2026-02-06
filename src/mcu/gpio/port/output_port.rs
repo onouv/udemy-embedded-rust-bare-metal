@@ -101,4 +101,8 @@ impl OutputPort {
 
         Ok(())
     }
+
+    pub fn pin_high(&self, pin: u32) -> Result<(), BoardError> {
+        self.bit_set_reset_reg.    }
+
 }
