@@ -1,4 +1,4 @@
-use crate::{board::BoardError, mcu::OutputPort};
+use super::board_error::BoardError
 
 pub struct Led {
     port: OutputPort

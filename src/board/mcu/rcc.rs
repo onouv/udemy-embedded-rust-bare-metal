@@ -1,4 +1,4 @@
-use super::gpio::GPIOId;
+use super::gpio::GpioId;
 use super::{
     RCC_AHBENR_ADDR, MCUError, register::{Address, Register}
 };
@@ -7,15 +7,15 @@ use super::{
  * RCC related utility functions with private default implementation.
  */
 pub(super) trait RCCUtil {
-    unsafe fn enable_peripheral_clock(&self, port: GPIOId) -> Result<(), MCUError> {
+    unsafe fn enable_peripheral_clock(&self, port: GpioId) -> Result<(), MCUError> {
         let register: Register = Register::new(RCC_AHBENR_ADDR);
         let bit_pos = match port {
-            GPIOId::A => 17,
-            GPIOId::B => 18,
-            GPIOId::C => 19,
-            GPIOId::D => 20,
-            GPIOId::E => 21,
-            GPIOId::F => 22,
+            GpioId::A => 17,
+            GpioId::B => 18,
+            GpioId::C => 19,
+            GpioId::D => 20,
+            GpioId::E => 21,
+            GpioId::F => 22,
         };
 
         unsafe {

@@ -1,7 +1,7 @@
 use crate::mcu::{
     MCUError,
     gpio::{
-        GPIO, GPIOId,
+        GPIO, GpioId,
         port::{OutputType, OutputTypeUtil, PortMode, PortModeUtil},
     },
     gpio_addresses::*,
@@ -32,47 +32,47 @@ impl OutputPort {
      */
     pub fn new(gpio: GPIO) -> Self {
         let moder_addr = match gpio.id {
-            GPIOId::A => GPIOA_MODER_ADDR,
-            GPIOId::B => GPIOB_MODER_ADDR,
-            GPIOId::C => GPIOC_MODER_ADDR,
-            GPIOId::D => GPIOC_MODER_ADDR,
-            GPIOId::E => GPIOC_MODER_ADDR,
-            GPIOId::F => GPIOF_MODER_ADDR,
+            GpioId::A => GPIOA_MODER_ADDR,
+            GpioId::B => GPIOB_MODER_ADDR,
+            GpioId::C => GPIOC_MODER_ADDR,
+            GpioId::D => GPIOC_MODER_ADDR,
+            GpioId::E => GPIOC_MODER_ADDR,
+            GpioId::F => GPIOF_MODER_ADDR,
         };
 
         let odr_addr = match gpio.id {
-            GPIOId::A => GPIOA_ODR_ADDR,
-            GPIOId::B => GPIOB_ODR_ADDR,
-            GPIOId::C => GPIOC_ODR_ADDR,
-            GPIOId::D => GPIOC_ODR_ADDR,
-            GPIOId::E => GPIOC_ODR_ADDR,
-            GPIOId::F => GPIOF_ODR_ADDR,
+            GpioId::A => GPIOA_ODR_ADDR,
+            GpioId::B => GPIOB_ODR_ADDR,
+            GpioId::C => GPIOC_ODR_ADDR,
+            GpioId::D => GPIOC_ODR_ADDR,
+            GpioId::E => GPIOC_ODR_ADDR,
+            GpioId::F => GPIOF_ODR_ADDR,
         };
 
         let idr_addr = match gpio.id {
-            GPIOId::A => GPIOA_IDR_ADDR,
-            GPIOId::B => GPIOB_IDR_ADDR,
-            GPIOId::C => GPIOC_IDR_ADDR,
-            GPIOId::D => GPIOC_IDR_ADDR,
-            GPIOId::E => GPIOC_IDR_ADDR,
-            GPIOId::F => GPIOF_IDR_ADDR,
+            GpioId::A => GPIOA_IDR_ADDR,
+            GpioId::B => GPIOB_IDR_ADDR,
+            GpioId::C => GPIOC_IDR_ADDR,
+            GpioId::D => GPIOC_IDR_ADDR,
+            GpioId::E => GPIOC_IDR_ADDR,
+            GpioId::F => GPIOF_IDR_ADDR,
         };
         let otyper_addr = match gpio.id {
-            GPIOId::A => GPIOA_OTYPER_ADDR,
-            GPIOId::B => GPIOB_OTYPER_ADDR,
-            GPIOId::C => GPIOC_OTYPER_ADDR,
-            GPIOId::D => GPIOC_OTYPER_ADDR,
-            GPIOId::E => GPIOC_OTYPER_ADDR,
-            GPIOId::F => GPIOF_OTYPER_ADDR,
+            GpioId::A => GPIOA_OTYPER_ADDR,
+            GpioId::B => GPIOB_OTYPER_ADDR,
+            GpioId::C => GPIOC_OTYPER_ADDR,
+            GpioId::D => GPIOC_OTYPER_ADDR,
+            GpioId::E => GPIOC_OTYPER_ADDR,
+            GpioId::F => GPIOF_OTYPER_ADDR,
         };
 
         let bsrr_addr = match gpio.id {
-            GPIOId::A => GPIOA_BSRR_ADDR,
-            GPIOId::B => GPIOB_BSRR_ADDR,
-            GPIOId::C => GPIOC_BSRR_ADDR,
-            GPIOId::D => GPIOC_BSRR_ADDR,
-            GPIOId::E => GPIOC_BSRR_ADDR,
-            GPIOId::F => GPIOF_BSRR_ADDR,
+            GpioId::A => GPIOA_BSRR_ADDR,
+            GpioId::B => GPIOB_BSRR_ADDR,
+            GpioId::C => GPIOC_BSRR_ADDR,
+            GpioId::D => GPIOC_BSRR_ADDR,
+            GpioId::E => GPIOC_BSRR_ADDR,
+            GpioId::F => GPIOF_BSRR_ADDR,
         };
 
         let mode_reg = Register::new(moder_addr);

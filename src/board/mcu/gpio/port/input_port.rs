@@ -1,5 +1,5 @@
 use super::PortModeUtil;
-use super::{GPIO, GPIOId};
+use super::{GPIO, GpioId};
 use crate::mcu::{
     MCUError, gpio::port::PortMode, gpio_addresses::*, rcc::RCCUtil, register::Register,
 };
@@ -23,21 +23,21 @@ impl InputPort {
      */
     pub fn new(gpio: GPIO) -> Self {
         let moder_addr = match gpio.id {
-            GPIOId::A => GPIOA_MODER_ADDR,
-            GPIOId::B => GPIOB_MODER_ADDR,
-            GPIOId::C => GPIOC_MODER_ADDR,
-            GPIOId::D => GPIOD_MODER_ADDR,
-            GPIOId::E => GPIOE_MODER_ADDR,
-            GPIOId::F => GPIOF_MODER_ADDR,
+            GpioId::A => GPIOA_MODER_ADDR,
+            GpioId::B => GPIOB_MODER_ADDR,
+            GpioId::C => GPIOC_MODER_ADDR,
+            GpioId::D => GPIOD_MODER_ADDR,
+            GpioId::E => GPIOE_MODER_ADDR,
+            GpioId::F => GPIOF_MODER_ADDR,
         };
 
         let idr_addr = match gpio.id {
-            GPIOId::A => GPIOA_IDR_ADDR,
-            GPIOId::B => GPIOB_IDR_ADDR,
-            GPIOId::C => GPIOC_IDR_ADDR,
-            GPIOId::D => GPIOC_IDR_ADDR,
-            GPIOId::E => GPIOC_IDR_ADDR,
-            GPIOId::F => GPIOF_IDR_ADDR,
+            GpioId::A => GPIOA_IDR_ADDR,
+            GpioId::B => GPIOB_IDR_ADDR,
+            GpioId::C => GPIOC_IDR_ADDR,
+            GpioId::D => GPIOC_IDR_ADDR,
+            GpioId::E => GPIOC_IDR_ADDR,
+            GpioId::F => GPIOF_IDR_ADDR,
         };
 
         let mode_reg = Register::new(moder_addr);
