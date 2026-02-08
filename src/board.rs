@@ -1,54 +1,60 @@
 mod button;
 mod led;
-
-use crate::mcu::{GPIO, GPIOId};
-use super::mcu::Port;
+mod mcu;
 
 pub use button::Button;
 pub use led::Led;
 
+use crate::board::mcu::{DisabledOutput, GpioId, MCU, MCUError};
+
 #[derive(Debug)]
 pub enum BoardError {
-    InvalidGPIO,
     ResourceTaken,
+    ResourceUnsupported,
 }
-pub struct Board {
-    ports: [Option<Port>; 2],
-}
+
+pub struct Board;
 
 impl Board {
-    pub fn take_port(&mut self, port: GPIOId, pin: u8) -> Result<Port, BoardError> {
-        let idx = match (port, pin) {
-            // to save memory, match only all the permutations you actually need
-            (GPIOId::A, 8) => 0,
-            (GPIOId::B, 13) => 1,
-            _ => {
-                return Err(BoardError::InvalidGPIO);
-            }
-        };
-
-        if self.ports[idx].is_none() {
-            return Err(BoardError::ResourceTaken);
+    pub fn new() -> Self {
+        Self {
         }
-        Ok(self.ports[idx].take().unwrap())
+    }
+
+    pub fn take_led(&self, id: u8) -> Result<Led, BoardError> {
+        match get_port(id) {
+            Ok(p) => match p.into_pushpull() {
+                Ok(port) => {
+                    let led = Led::new(port);
+                    Ok(led)
+                }
+                _ => {
+                    Err(BoardError::ResourceUnsupported)
+                }
+            },
+            Err(MCUError::ResourceTaken) => Err(BoardError::ResourceTaken),
+            _ => Err(BoardError::ResourceUnsupported),
+        }
+    }
+}
+
+fn get_port(led: u8) -> Result<DisabledOutput, MCUError> {
+    unsafe {
+        #[allow(static_mut_refs)] // MCU implements a singleton pattern for the GPIO
+        match led {
+            3 => MCU.take_output(&GpioId::E, 9),
+            4 => MCU.take_output(&GpioId::E, 8),
+            5 => MCU.take_output(&GpioId::E, 10),
+            6 => MCU.take_output(&GpioId::E, 15),
+            7 => MCU.take_output(&GpioId::E, 11),
+            8 => MCU.take_output(&GpioId::E, 14),
+            9 => MCU.take_output(&GpioId::E, 12),
+            10 => MCU.take_output(&GpioId::E, 13),
+            _ => Err(MCUError::ResourceUnsupported),
+        }
     }
 }
 
 pub static mut BOARD: Board = Board {
-    // to save memory, match only all the permutations you actually need
-    ports: [
-        Some(Port {
-            gpio: GPIO {
-                id: GPIOId::A,
-                pin: 8,
-            },
-        }),
-        Some(Port {
-            gpio: GPIO {
-                id: GPIOId::A,
-                pin: 13,
-            },
-        }),
-    ],
+    // Initialize the board with all resources available.
 };
-

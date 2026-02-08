@@ -3,24 +3,22 @@
 #![allow(clippy::empty_loop, unused)]
 
 mod board;
-mod mcu;
 mod startup_stm32f303;
 mod utils;
 
 use board::BOARD;
 use core::panic::PanicInfo;
-use mcu::{GPIO, GPIOId};
+
+use crate::board::Board;
 const LED_INIT_FAILED: &str = "led init failed.";
 const LED_ON_FAILED: &str = "turning led on failed";
 
 #[unsafe(no_mangle)]
 fn main() {
-    #[allow(static_mut_refs)] // ...since we are implementing a singleton pattern in take_port()
-    let gpioe = unsafe { BOARD.take_port(GPIOId::A, 8).unwrap().to_input().unwrap() };
-    unsafe {
-        gpioe.init().expect("gpioe init failed");
-    }
-    
+    let board = Board::new();
+    let led4 = board.take_led(4).unwrap();
+    led4.on();
+
     loop {}
 }
 
