@@ -1,4 +1,4 @@
-use crate::board::mcu::MCUError;
+use crate::board::mcu::{MCUError, rcc::RCCUtil};
 
 use super::{GpioId, register::*};
 
@@ -45,17 +45,6 @@ impl ConfiguredOutput for OTypeOpenDrain {}
 impl ConfiguredOutput for PinPulledUp {}
 impl ConfiguredOutput for PinPulledDown {}
 
-enum PinMode {
-    PullUp,
-    PullDown,
-    Floating,
-}
-
-enum OutputType {
-    PushPull,
-    OpenDrain,
-}
-
 pub fn new_output(gpio: &GpioId, pin: u8) -> Result<DisabledOutput, MCUError> {
 
     let port_mode: u32 = 0b01; // general purpose output
@@ -76,20 +65,26 @@ pub fn new_output(gpio: &GpioId, pin: u8) -> Result<DisabledOutput, MCUError> {
 
 pub type OutputPushPull = Port<DirOutput, DontCare, OTypePushPull, OutputRegisterBlock>;
 
+impl RCCUtil for OutputPushPull {}
+
 impl<OTYPE> Port<DirOutput, DontCare, OTYPE, OutputRegisterBlock> {
 
     pub fn into_pushpull(self) -> Result<OutputPushPull, MCUError> {
 
         self.registers.otyper.clear_bit(self.gpio, self.pin)?;
 
-        Ok(Port {
+        let port: OutputPushPull = Port {
             gpio: self.gpio,
             pin: self.pin,
             direction: DirOutput,
             pin_mode: DontCare,
             otype: OTypePushPull,
             registers: self.registers,
-        })
+        };
+
+        port.enable_peripheral_clock(self.gpio)?;
+
+        Ok(port)
     }
     
     pub fn into_open_drain(self) -> Result<OutputPushPull, MCUError> {

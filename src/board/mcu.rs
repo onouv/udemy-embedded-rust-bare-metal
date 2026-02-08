@@ -1,5 +1,6 @@
 mod port;
 mod register;
+mod rcc;
 
 pub use port::*;
 
@@ -11,7 +12,7 @@ pub use port::*;
 mod gpio_addresses {
     // AHB Peripheral Clock Enable Register
     pub const RCC_BASE_ADDR: u32 = 0x4002_1000;
-    pub const RCC_AHBENR_OFFSET: u32 = RCC_BASE_ADDR + 0x14;
+    pub const RCC_AHBENR_OFFSET: u32 = 0x14;
 
     // GPIO port control registers
     pub const GPIO_BASE_ADDR: u32 = 0x4800_0000;
