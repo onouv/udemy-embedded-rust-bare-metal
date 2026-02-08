@@ -4,7 +4,6 @@
 
 mod board;
 mod startup_stm32f303;
-mod utils;
 
 use board::BOARD;
 use core::panic::PanicInfo;
