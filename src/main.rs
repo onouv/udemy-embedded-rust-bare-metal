@@ -8,15 +8,16 @@ mod utils;
 
 use board::BOARD;
 use core::panic::PanicInfo;
+
+use crate::board::Board;
 const LED_INIT_FAILED: &str = "led init failed.";
 const LED_ON_FAILED: &str = "turning led on failed";
 
 #[unsafe(no_mangle)]
 fn main() {
-    #[allow(static_mut_refs)] // ...since we are implementing a singleton pattern in take_port()
-    unsafe {
-        // start using the board, which will initialize the MCU and make resources available
-    }
+    let board = Board::new();
+    let led4 = board.take_led(4).unwrap();
+    led4.on();
 
     loop {}
 }

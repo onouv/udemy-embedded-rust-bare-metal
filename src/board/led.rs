@@ -1,24 +1,27 @@
-use super::board_error::BoardError
+use super::mcu::OutputPushPull;
+
 
 pub struct Led {
-    port: OutputPort
+    port: OutputPushPull,
 }
 
 impl Led {
-    pub fn on(&self) -> Result<(), BoardError> {
-        port.
-        Ok(())
+
+    pub fn new(pin: OutputPushPull) -> Self {
+        Self {
+            port: pin
+        }
     }
 
-    pub fn off(&self) -> Result<(), BoardError> {
-        todo!();
-
-        Ok(())
+    pub fn on(&self) {
+        self.port.set_high();
     }
 
-    pub fn toggle(&self) -> Result<(), BoardError> {
-        todo!();
+    pub fn off(&self) {
+        self.port.set_low();
+    }
 
-        Ok(())
+    pub fn toggle(&self) {
+        todo!();
     }
 }

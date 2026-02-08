@@ -1,3 +1,5 @@
+use crate::board::mcu::MCUError;
+
 use super::{GpioId, register::*};
 
 pub struct Port<Direction, PinMode, OutputType, RegisterBlock> {
@@ -9,39 +11,39 @@ pub struct Port<Direction, PinMode, OutputType, RegisterBlock> {
     registers: RegisterBlock,
 }
 
-pub type DisabledInput = Port<Input, DontCare, DontCare, InputRegisterBlock>;
-pub type InputPullDown = Port<Input, PinPullDown, DontCare, InputRegisterBlock>;
-pub type InputPullUp = Port<Input, PinPullUp, DontCare, InputRegisterBlock>;
-pub type InputFloating = Port<Input, PinFloating, DontCare, InputRegisterBlock>;
+pub type DisabledInput = Port<DirInput, DontCare, DontCare, InputRegisterBlock>;
+pub type InputPullDown = Port<DirInput, PinPulledDown, DontCare, InputRegisterBlock>;
+pub type InputPullUp = Port<DirInput, PinPulledUp, DontCare, InputRegisterBlock>;
+pub type InputFloating = Port<DirInput, PinFloating, DontCare, InputRegisterBlock>;
 
-pub type DisabledOutput = Port<Output, DontCare, DontCare, OutputRegisterBlock>;
-pub type OutputPushPullPullUp = Port<Output, PinPullUp, PushPull, OutputRegisterBlock>;
-pub type OutputPushPullPullDown = Port<Output, PinPullDown, PushPull, OutputRegisterBlock>;
-pub type OutputOpenDrainPullUp = Port<Output, PinPullUp, OpenDrain, OutputRegisterBlock>;
-pub type OutputOpenDrainPullDown = Port<Output, PinPullDown, OpenDrain, OutputRegisterBlock>;
+pub type DisabledOutput = Port<DirOutput, DontCare, DontCare, OutputRegisterBlock>;
+pub type OutputOpenDrain = Port<DirOutput, DontCare, OTypeOpenDrain, OutputRegisterBlock>;
+pub type OutputPushPullPulledUp = Port<DirOutput, PinPulledUp, OTypePushPull, OutputRegisterBlock>;
+pub type OutputPushPullPulledDown = Port<DirOutput, PinPulledDown, OTypePushPull, OutputRegisterBlock>;
+pub type OutputOpenDrainPulledUp = Port<DirOutput, PinPulledUp, OTypeOpenDrain, OutputRegisterBlock>;
+pub type OutputOpenDrainPulledDown = Port<DirOutput, PinPulledDown, OTypeOpenDrain, OutputRegisterBlock>;
 
-pub struct Input;
-pub struct Output;
-pub struct Enabled;
+pub struct DirInput;
+pub struct DirOutput;
 pub struct DontCare;
-pub struct PushPull;
-pub struct OpenDrain;
-pub struct PinPullUp;
-pub struct PinPullDown;
+pub struct OTypePushPull;
+pub struct OTypeOpenDrain;
+pub struct PinPulledUp;
+pub struct PinPulledDown;
 pub struct PinFloating;
 
 // Marker trait to indicate the input pin mode is configured (not `DontCare`).
 pub trait ConfiguredInput {}
-impl ConfiguredInput for PinPullUp {}
-impl ConfiguredInput for PinPullDown {}
+impl ConfiguredInput for PinPulledUp {}
+impl ConfiguredInput for PinPulledDown {}
 impl ConfiguredInput for PinFloating {}
 
 // marker trait to indicate output pins are configured (not `DontCare`).
 pub trait ConfiguredOutput {}
-impl ConfiguredOutput for PushPull {}
-impl ConfiguredOutput for OpenDrain {}
-impl ConfiguredOutput for PinPullUp {}
-impl ConfiguredOutput for PinPullDown {}
+impl ConfiguredOutput for OTypePushPull {}
+impl ConfiguredOutput for OTypeOpenDrain {}
+impl ConfiguredOutput for PinPulledUp {}
+impl ConfiguredOutput for PinPulledDown {}
 
 enum PinMode {
     PullUp,
@@ -54,101 +56,178 @@ enum OutputType {
     OpenDrain,
 }
 
-pub fn new_output(gpio: &GpioId, pin: u8) -> DisabledOutput {
-    Port {
+pub fn new_output(gpio: &GpioId, pin: u8) -> Result<DisabledOutput, MCUError> {
+
+    let port_mode: u32 = 0b01; // general purpose output
+    let offset: u32 = (pin * 2) as u32;
+    let port = Port {
         gpio: *gpio,
         pin,
-        direction: Output,
+        direction: DirOutput,
         pin_mode: DontCare,
         otype: DontCare,
         registers: OutputRegisterBlock::new(),
+    };
+
+    port.registers.moder.set_bits(port.gpio, port_mode, offset, 2)?;
+
+    Ok(port)
+}
+
+pub type OutputPushPull = Port<DirOutput, DontCare, OTypePushPull, OutputRegisterBlock>;
+
+impl<OTYPE> Port<DirOutput, DontCare, OTYPE, OutputRegisterBlock> {
+
+    pub fn into_pushpull(self) -> Result<OutputPushPull, MCUError> {
+
+        self.registers.otyper.clear_bit(self.gpio, self.pin)?;
+
+        Ok(Port {
+            gpio: self.gpio,
+            pin: self.pin,
+            direction: DirOutput,
+            pin_mode: DontCare,
+            otype: OTypePushPull,
+            registers: self.registers,
+        })
+    }
+    
+    pub fn into_open_drain(self) -> Result<OutputPushPull, MCUError> {
+        
+        self.registers.otyper.set_bit(self.gpio, self.pin)?;
+
+        Ok(Port {
+            gpio: self.gpio,
+            pin: self.pin,
+            direction: DirOutput,
+            pin_mode: DontCare,
+            otype: OTypePushPull,
+            registers: OutputRegisterBlock::new()
+        })
+    }
+}
+    
+impl<PINMOD> Port<DirOutput, PINMOD, OTypePushPull, OutputRegisterBlock> {
+    pub fn into_pulled_down(self) -> Result<OutputPushPullPulledDown, MCUError> {
+        // see Reference Manual sect. 11.4.4 
+        let pin_mode: u32 = 0b10;
+        let offset: u32 = (self.pin * 2) as u32; 
+        self.registers.pupdr.set_bits(self.gpio, pin_mode, offset, 2)?;
+
+        Ok(Port {
+            gpio: self.gpio,
+            pin: self.pin,
+            direction: DirOutput,
+            pin_mode: PinPulledDown,
+            otype: OTypePushPull,
+            registers: self.registers,
+        })
+    }
+
+    pub fn into_pulled_up(self) -> Result<OutputPushPullPulledUp, MCUError> {
+        // see Reference Manual sect. 11.4.4
+        let pin_mode: u32 = 0b01;
+        let offset: u32 = (self.pin * 2) as u32; 
+        self.registers.pupdr.set_bits(self.gpio, pin_mode, offset, 2)?;
+
+        Ok(Port {
+            gpio: self.gpio,
+            pin: self.pin,
+            direction: DirOutput,
+            pin_mode: PinPulledUp,
+            otype: OTypePushPull,
+            registers: self.registers,
+        })
     }
 }
 
-impl<PINMOD, OTYPE> Port<Output, PINMOD, OTYPE, OutputRegisterBlock> {
-    pub fn into_pushpull_pulled_up(self) -> OutputPushPullPullUp {
-        Port {
+impl<PINMOD> Port<DirOutput, PINMOD, OTypeOpenDrain, OutputRegisterBlock> {
+    pub fn into_pulled_down(self) -> Result<OutputOpenDrainPulledDown, MCUError> {
+
+        // see Reference Manual sect. 11.4.4 
+        let pin_mode: u32 = 0b10;
+        let offset: u32 = (self.pin * 2) as u32; 
+        self.registers.pupdr.set_bits(self.gpio, pin_mode, offset, 2)?;
+
+        Ok(Port {
             gpio: self.gpio,
             pin: self.pin,
-            direction: Output,
-            pin_mode: PinPullUp,
-            otype: PushPull,
+            direction: DirOutput,
+            pin_mode: PinPulledDown,
+            otype: OTypeOpenDrain,
             registers: self.registers,
-        }
+        })
     }
 
-    pub fn into_pushpull_pulled_down(self) -> OutputPushPullPullDown {
-        Port {
-            gpio: self.gpio,
-            pin: self.pin,
-            direction: Output,
-            pin_mode: PinPullDown,
-            otype: PushPull,
-            registers: self.registers,
-        }
-    }
+    pub fn into_pulled_up(self) -> Result<OutputOpenDrainPulledUp, MCUError> {
+        
+        // see Reference Manual sect. 11.4.4
+        let pin_mode: u32 = 0b01;
+        let offset: u32 = (self.pin * 2) as u32; 
+        self.registers.pupdr.set_bits(self.gpio, pin_mode, offset, 2)?;
 
-    pub fn into_open_drain_pull_up(self) -> OutputOpenDrainPullUp {
-        Port {
+        Ok(Port {
             gpio: self.gpio,
             pin: self.pin,
-            direction: Output,
-            pin_mode: PinPullUp,
-            otype: OpenDrain,
+            direction: DirOutput,
+            pin_mode: PinPulledUp,
+            otype: OTypeOpenDrain,
             registers: self.registers,
-        }
-    }
-
-    pub fn into_open_drain_pull_down(self) -> OutputOpenDrainPullDown {
-        Port {
-            gpio: self.gpio,
-            pin: self.pin,
-            direction: Output,
-            pin_mode: PinPullDown,
-            otype: OpenDrain,
-            registers: self.registers,
-        }
+        })
     }
 }
 
-pub fn new_input(gpio: &GpioId, pin: u8) -> DisabledInput {
-    Port {
-        direction: Input,
+pub fn new_input(gpio: &GpioId, pin: u8) -> Result<DisabledInput, MCUError> {
+    
+    let port_mode: u32 = 0b00; // input state 
+    let offset: u32 = (pin * 2) as u32;
+    
+    let port = Port {
+        direction: DirInput,
         pin_mode: DontCare,
         otype: DontCare,
         registers: InputRegisterBlock::new(),
         pin,
         gpio: *gpio,
-    }
+    };    
+    port.registers.moder.set_bits(port.gpio, port_mode, offset, 2)?;
+
+    Ok(port)
 }
 
-impl<PINMOD> Port<Input, PINMOD, DontCare, InputRegisterBlock> {
-    pub fn into_floating(self) -> InputFloating {
-        Port {
-            direction: Input,
+impl<PINMOD> Port<DirInput, PINMOD, DontCare, InputRegisterBlock> {
+    pub fn into_floating(self) -> Result<InputFloating, MCUError> {
+        // see Reference Manual sect. 11.4.4
+        let pin_mode: u32 = 0b00; // no pull-up, pull-down
+        let offset: u32 = (self.pin * 2) as u32; 
+        self.registers.pupdr.set_bits(self.gpio, pin_mode, offset, 2)?;
+        
+        Ok(Port {
+            direction: DirInput,
             pin_mode: PinFloating,
             otype: DontCare,
             registers: self.registers,
             gpio: self.gpio,
             pin: self.pin,
-        }
+        })
     }
 
-    pub fn into_pulled_up(self) -> InputPullUp {
-        Port {
-            direction: Input,
-            pin_mode: PinPullUp,
+    pub fn into_pulled_up(self) -> Result<InputPullUp, MCUError> {
+        
+        Ok(Port {
+            direction: DirInput,
+            pin_mode: PinPulledUp,
             otype: DontCare,
             registers: self.registers,
             gpio: self.gpio,
             pin: self.pin,
-        }
+        })
     }
 
     pub fn into_pulled_down(self) -> InputPullDown {
         Port {
-            direction: Input,
-            pin_mode: PinPullDown,
+            direction: DirInput,
+            pin_mode: PinPulledDown,
             otype: DontCare,
             registers: self.registers,
             gpio: self.gpio,
@@ -157,7 +236,7 @@ impl<PINMOD> Port<Input, PINMOD, DontCare, InputRegisterBlock> {
     }
 }
 
-impl<PINMOD: ConfiguredInput> Port<Input, PINMOD, DontCare, InputRegisterBlock> {
+impl<PINMOD: ConfiguredInput> Port<DirInput, PINMOD, DontCare, InputRegisterBlock> {
     pub fn pin_is_high(&self) -> bool {
         // Read the input data register for the configured pin.
         // Actual register-read logic not yet implemented; keep placeholder.
@@ -165,21 +244,25 @@ impl<PINMOD: ConfiguredInput> Port<Input, PINMOD, DontCare, InputRegisterBlock> 
     }
 }
 
-impl<PINMOD, OTYPE: ConfiguredOutput> Port<Output, PINMOD, OTYPE, OutputRegisterBlock> {
+impl <PINMOD, OTYPE: ConfiguredOutput> Port<DirOutput, PINMOD, OTYPE, OutputRegisterBlock> {
     pub fn set_high(&self) {
-        // Write to the output data register for the configured pin.
-        // Actual register-write logic not yet implemented; keep placeholder.
+        // set pin bit in BS[pin] GPIOx_BSRR[15:0] 
+        self.registers.bsrr.set_bit(self.gpio, self.pin);
     }
 
     pub fn set_low(&self) {
-        // Write to the output data register for the configured pin.
-        // Actual register-write logic not yet implemented; keep placeholder.
+        // set pin bit in BR[pin] GPIOx_BSRR[31:0] 
+        self.registers.bsrr.set_bit(self.gpio, self.pin + 16);
     }
 }
+
+
+
 pub struct InputRegisterBlock {
     ahbenr: super::register::RCC_AHBENR,
     moder: GPIOx_MODER,
     otyper: GPIOx_OTYPER,
+    pupdr: GPIOx_PUPDR,
     idr: GPIOx_IDR,
 }
 
@@ -189,6 +272,7 @@ impl InputRegisterBlock {
             ahbenr: RCC_AHBENR {},
             moder: GPIOx_MODER {},
             otyper: GPIOx_OTYPER {},
+            pupdr: GPIOx_PUPDR,
             idr: GPIOx_IDR {},
         }
     }

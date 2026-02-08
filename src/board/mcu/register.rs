@@ -2,8 +2,8 @@ use super::{Address, GpioId, MCUError, gpio_addresses::*};
 use core::ptr;
 
 pub trait Register {
-    fn set_bit(&self, gpio: GpioId, bit_pos: u32) -> Result<(), MCUError>;
-    fn clear_bit(&self, gpio: GpioId, bit_pos: u32) -> Result<(), MCUError>;
+    fn set_bit(&self, gpio: GpioId, bit_pos: u8) -> Result<(), MCUError>;
+    fn clear_bit(&self, gpio: GpioId, bit_pos: u8) -> Result<(), MCUError>;
     fn set_bits(
         &self,
         gpio: GpioId,
@@ -11,19 +11,21 @@ pub trait Register {
         offset: u32,
         val_bit_len: u32,
     ) -> Result<(), MCUError>;
+
+    // TODO: there should be a reset() function
 }
 
 #[allow(non_camel_case_types)] // term from STM32 reference manual
 pub struct RCC_AHBENR; // AHB Peripheral Clock Enable Register
 
 impl Register for RCC_AHBENR {
-    fn set_bit(&self, gpio: GpioId, bit_pos: u32) -> Result<(), MCUError> {
+    fn set_bit(&self, gpio: GpioId, bit_pos: u8) -> Result<(), MCUError> {
         let address = (RCC_BASE_ADDR + RCC_AHBENR_OFFSET) as Address;
 
         set_bit(address, bit_pos)
     }
 
-    fn clear_bit(&self, gpio: GpioId, bit_pos: u32) -> Result<(), MCUError> {
+    fn clear_bit(&self, gpio: GpioId, bit_pos: u8) -> Result<(), MCUError> {
         let address = (RCC_BASE_ADDR + RCC_AHBENR_OFFSET) as Address;
 
         clear_bit(address, bit_pos)
@@ -46,13 +48,13 @@ impl Register for RCC_AHBENR {
 pub struct GPIOx_MODER; // GPIO port mode register
 
 impl Register for GPIOx_MODER {
-    fn set_bit(&self, gpio: GpioId, bit_pos: u32) -> Result<(), MCUError> {
+    fn set_bit(&self, gpio: GpioId, bit_pos: u8) -> Result<(), MCUError> {
         let address = (GPIO_BASE_ADDR + calc_gpio_offset(&gpio) + GPIO_MODER_OFFSET) as Address;
 
         set_bit(address, bit_pos)
     }
 
-    fn clear_bit(&self, gpio: GpioId, bit_pos: u32) -> Result<(), MCUError> {
+    fn clear_bit(&self, gpio: GpioId, bit_pos: u8) -> Result<(), MCUError> {
         let address = (GPIO_BASE_ADDR + calc_gpio_offset(&gpio) + GPIO_MODER_OFFSET) as Address;
 
         clear_bit(address, bit_pos)
@@ -75,13 +77,13 @@ impl Register for GPIOx_MODER {
 pub struct GPIOx_OTYPER; // GPIO port mode register
 
 impl Register for GPIOx_OTYPER {
-    fn set_bit(&self, gpio: GpioId, bit_pos: u32) -> Result<(), MCUError> {
+    fn set_bit(&self, gpio: GpioId, bit_pos: u8) -> Result<(), MCUError> {
         let address = (GPIO_BASE_ADDR + calc_gpio_offset(&gpio) + GPIO_OTYPER_OFFSET) as Address;
 
         set_bit(address, bit_pos)
     }
 
-    fn clear_bit(&self, gpio: GpioId, bit_pos: u32) -> Result<(), MCUError> {
+    fn clear_bit(&self, gpio: GpioId, bit_pos: u8) -> Result<(), MCUError> {
         let address = (GPIO_BASE_ADDR + calc_gpio_offset(&gpio) + GPIO_OTYPER_OFFSET) as Address;
 
         clear_bit(address, bit_pos)
@@ -104,13 +106,13 @@ impl Register for GPIOx_OTYPER {
 pub struct GPIOx_PUPDR; // GPIO port mode register
 
 impl Register for GPIOx_PUPDR {
-    fn set_bit(&self, gpio: GpioId, bit_pos: u32) -> Result<(), MCUError> {
+    fn set_bit(&self, gpio: GpioId, bit_pos: u8) -> Result<(), MCUError> {
         let address = (GPIO_BASE_ADDR + calc_gpio_offset(&gpio) + GPIO_PUPDR_OFFSET) as Address;
 
         set_bit(address, bit_pos)
     }
 
-    fn clear_bit(&self, gpio: GpioId, bit_pos: u32) -> Result<(), MCUError> {
+    fn clear_bit(&self, gpio: GpioId, bit_pos: u8) -> Result<(), MCUError> {
         let address = (GPIO_BASE_ADDR + calc_gpio_offset(&gpio) + GPIO_PUPDR_OFFSET) as Address;
 
         clear_bit(address, bit_pos)
@@ -133,13 +135,13 @@ impl Register for GPIOx_PUPDR {
 pub struct GPIOx_IDR; // GPIO port mode register
 
 impl Register for GPIOx_IDR {
-    fn set_bit(&self, gpio: GpioId, bit_pos: u32) -> Result<(), MCUError> {
+    fn set_bit(&self, gpio: GpioId, bit_pos: u8) -> Result<(), MCUError> {
         let address = (GPIO_BASE_ADDR + calc_gpio_offset(&gpio) + GPIO_IDR_OFFSET) as Address;
 
         set_bit(address, bit_pos)
     }
 
-    fn clear_bit(&self, gpio: GpioId, bit_pos: u32) -> Result<(), MCUError> {
+    fn clear_bit(&self, gpio: GpioId, bit_pos: u8) -> Result<(), MCUError> {
         let address = (GPIO_BASE_ADDR + calc_gpio_offset(&gpio) + GPIO_IDR_OFFSET) as Address;
 
         clear_bit(address, bit_pos)
@@ -162,13 +164,13 @@ impl Register for GPIOx_IDR {
 pub struct GPIOx_ODR; // GPIO port mode register
 
 impl Register for GPIOx_ODR {
-    fn set_bit(&self, gpio: GpioId, bit_pos: u32) -> Result<(), MCUError> {
+    fn set_bit(&self, gpio: GpioId, bit_pos: u8) -> Result<(), MCUError> {
         let address = (GPIO_BASE_ADDR + calc_gpio_offset(&gpio) + GPIO_ODR_OFFSET) as Address;
 
         set_bit(address, bit_pos)
     }
 
-    fn clear_bit(&self, gpio: GpioId, bit_pos: u32) -> Result<(), MCUError> {
+    fn clear_bit(&self, gpio: GpioId, bit_pos: u8) -> Result<(), MCUError> {
         let address = (GPIO_BASE_ADDR + calc_gpio_offset(&gpio) + GPIO_ODR_OFFSET) as Address;
 
         clear_bit(address, bit_pos)
@@ -191,13 +193,13 @@ impl Register for GPIOx_ODR {
 pub struct GPIOx_BSRR; // GPIO port mode register
 
 impl Register for GPIOx_BSRR {
-    fn set_bit(&self, gpio: GpioId, bit_pos: u32) -> Result<(), MCUError> {
+    fn set_bit(&self, gpio: GpioId, bit_pos: u8) -> Result<(), MCUError> {
         let address = (GPIO_BASE_ADDR + calc_gpio_offset(&gpio) + GPIO_BSRR_OFFSET) as Address;
 
         set_bit(address, bit_pos)
     }
 
-    fn clear_bit(&self, gpio: GpioId, bit_pos: u32) -> Result<(), MCUError> {
+    fn clear_bit(&self, gpio: GpioId, bit_pos: u8) -> Result<(), MCUError> {
         let address = (GPIO_BASE_ADDR + calc_gpio_offset(&gpio) + GPIO_BSRR_OFFSET) as Address;
 
         clear_bit(address, bit_pos)
@@ -216,7 +218,7 @@ impl Register for GPIOx_BSRR {
     }
 }
 
-fn clear_bit(address: Address, bit_pos: u32) -> Result<(), MCUError> {
+fn clear_bit(address: Address, bit_pos: u8) -> Result<(), MCUError> {
     if bit_pos > 31 {
         return Err(MCUError::InvalidOffset);
     }
@@ -230,7 +232,7 @@ fn clear_bit(address: Address, bit_pos: u32) -> Result<(), MCUError> {
     Ok(())
 }
 
-fn set_bit(address: Address, bit_pos: u32) -> Result<(), MCUError> {
+fn set_bit(address: Address, bit_pos: u8) -> Result<(), MCUError> {
     if bit_pos > 31 {
         return Err(MCUError::InvalidOffset);
     }

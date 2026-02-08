@@ -1,7 +1,7 @@
 mod port;
 mod register;
 
-use port::*;
+pub use port::*;
 
 //===============================================
 // Device-specific constants, so these can be
@@ -9,7 +9,7 @@ use port::*;
 //===============================================
 
 mod gpio_addresses {
-// AHB Peripheral Clock Enable Register
+    // AHB Peripheral Clock Enable Register
     pub const RCC_BASE_ADDR: u32 = 0x4002_1000;
     pub const RCC_AHBENR_OFFSET: u32 = RCC_BASE_ADDR + 0x14;
 
@@ -46,7 +46,7 @@ impl MCU {
             port.take();
         }
 
-        Ok(port::new_input(gpio, pin))
+        port::new_input(gpio, pin)
     }
 
     pub fn take_output(&mut self, gpio: &GpioId, pin: u8) -> Result<DisabledOutput, MCUError> {
@@ -60,7 +60,7 @@ impl MCU {
             port.take();
         }
 
-        Ok(port::new_output(gpio, pin))
+        port::new_output(gpio, pin)
     }
 }
 
@@ -80,6 +80,19 @@ fn get_port_indices(gpio: &GpioId, pin: u8) -> Result<(usize, usize), MCUError> 
         (GpioId::E, 1) => Ok((4, 1)),
         (GpioId::E, 2) => Ok((4, 2)),
         (GpioId::E, 3) => Ok((4, 3)),
+        (GpioId::E, 4) => Ok((4, 4)),
+        (GpioId::E, 4) => Ok((4, 4)),
+        (GpioId::E, 5) => Ok((4, 5)),
+        (GpioId::E, 6) => Ok((4, 6)),
+        (GpioId::E, 7) => Ok((4, 7)),
+        (GpioId::E, 8) => Ok((4, 8)),
+        (GpioId::E, 9) => Ok((4, 9)),
+        (GpioId::E, 10) => Ok((4, 10)),
+        (GpioId::E, 11) => Ok((4, 11)),
+        (GpioId::E, 12) => Ok((4, 12)),
+        (GpioId::E, 13) => Ok((4, 13)),
+        (GpioId::E, 14) => Ok((4, 14)),
+        (GpioId::E, 15) => Ok((4, 15)),
         _ => Err(MCUError::ResourceUnsupported),
     }
 }
