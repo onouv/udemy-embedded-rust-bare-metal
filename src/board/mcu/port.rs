@@ -47,6 +47,20 @@ impl ConfiguredOutput for PinPulledDown {}
 
 pub fn new_output(gpio: &GpioId, pin: u8) -> Result<DisabledOutput, MCUError> {
 
+    // Enable the peripheral clock FIRST before any register access
+    let ahbenr = RCC_AHBENR {};
+    let bit_pos = match gpio {
+        GpioId::A => 17,
+        GpioId::B => 18,
+        GpioId::C => 19,
+        GpioId::D => 20,
+        GpioId::E => 21,
+        GpioId::F => 22,
+    };
+    unsafe {
+        ahbenr.set_bit(bit_pos)?;
+    }
+
     let port_mode: u32 = 0b01; // general purpose output
     let offset: u32 = (pin * 2) as u32;
     let port = Port {
@@ -70,6 +84,19 @@ impl RCCUtil for OutputPushPull {}
 impl<OTYPE> Port<DirOutput, DontCare, OTYPE, OutputRegisterBlock> {
 
     pub fn into_pushpull(self) -> Result<OutputPushPull, MCUError> {
+        // Enable the peripheral clock FIRST before modifying registers
+        let ahbenr = RCC_AHBENR {};
+        let bit_pos = match self.gpio {
+            GpioId::A => 17,
+            GpioId::B => 18,
+            GpioId::C => 19,
+            GpioId::D => 20,
+            GpioId::E => 21,
+            GpioId::F => 22,
+        };
+        unsafe {
+            ahbenr.set_bit(bit_pos)?;
+        }
 
         self.registers.otyper.clear_bit(self.gpio, self.pin)?;
 
@@ -81,8 +108,6 @@ impl<OTYPE> Port<DirOutput, DontCare, OTYPE, OutputRegisterBlock> {
             otype: OTypePushPull,
             registers: self.registers,
         };
-
-        port.enable_peripheral_clock(self.gpio)?;
 
         Ok(port)
     }
@@ -174,6 +199,20 @@ impl<PINMOD> Port<DirOutput, PINMOD, OTypeOpenDrain, OutputRegisterBlock> {
 
 pub fn new_input(gpio: &GpioId, pin: u8) -> Result<DisabledInput, MCUError> {
     
+    // Enable the peripheral clock FIRST before any register access
+    let ahbenr = RCC_AHBENR {};
+    let bit_pos = match gpio {
+        GpioId::A => 17,
+        GpioId::B => 18,
+        GpioId::C => 19,
+        GpioId::D => 20,
+        GpioId::E => 21,
+        GpioId::F => 22,
+    };
+    unsafe {
+        ahbenr.set_bit(bit_pos)?;
+    }
+
     let port_mode: u32 = 0b00; // input state 
     let offset: u32 = (pin * 2) as u32;
     
@@ -234,20 +273,22 @@ impl<PINMOD> Port<DirInput, PINMOD, DontCare, InputRegisterBlock> {
 impl<PINMOD: ConfiguredInput> Port<DirInput, PINMOD, DontCare, InputRegisterBlock> {
     pub fn pin_is_high(&self) -> bool {
         // Read the input data register for the configured pin.
-        // Actual register-read logic not yet implemented; keep placeholder.
+        // TODO: Actual register-read logic not yet implemented; keep placeholder.
         true
     }
 }
 
 impl <PINMOD, OTYPE: ConfiguredOutput> Port<DirOutput, PINMOD, OTYPE, OutputRegisterBlock> {
     pub fn set_high(&self) {
-        // set pin bit in BS[pin] GPIOx_BSRR[15:0] 
-        self.registers.bsrr.set_bit(self.gpio, self.pin);
+        // set pin bit in BS[pin] GPIOx_BSRR[15:0]
+        // BSRR is write-only, write 1 to set the bit
+        let _ = self.registers.bsrr.set_bit(self.gpio, self.pin);
     }
 
     pub fn set_low(&self) {
-        // set pin bit in BR[pin] GPIOx_BSRR[31:0] 
-        self.registers.bsrr.set_bit(self.gpio, self.pin + 16);
+        // set pin bit in BR[pin] GPIOx_BSRR[31:16]
+        // BSRR is write-only, write 1 to reset the bit (upper 16 bits)
+        let _ = self.registers.bsrr.set_bit(self.gpio, self.pin + 16);
     }
 }
 

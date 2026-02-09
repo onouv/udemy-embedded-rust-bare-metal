@@ -194,19 +194,19 @@ impl GpioRegister for GPIOx_ODR {
 }
 
 #[allow(non_camel_case_types)] // term from STM32 reference manual
-pub struct GPIOx_BSRR; // GPIO port mode register
+pub struct GPIOx_BSRR; // GPIO port Bit Set/Reset register
 
 impl GpioRegister for GPIOx_BSRR {
     fn set_bit(&self, gpio: GpioId, bit_pos: u8) -> Result<(), MCUError> {
         let address = (GPIO_BASE_ADDR + calc_gpio_offset(&gpio) + GPIO_BSRR_OFFSET) as Address;
 
-        set_bit(address, bit_pos)
+        write_bit(address, bit_pos)
     }
 
     fn clear_bit(&self, gpio: GpioId, bit_pos: u8) -> Result<(), MCUError> {
         let address = (GPIO_BASE_ADDR + calc_gpio_offset(&gpio) + GPIO_BSRR_OFFSET) as Address;
 
-        clear_bit(address, bit_pos)
+        write_bit(address, bit_pos)
     }
 
     fn set_bits(
@@ -218,7 +218,21 @@ impl GpioRegister for GPIOx_BSRR {
     ) -> Result<(), MCUError> {
         let address = (GPIO_BASE_ADDR + calc_gpio_offset(&gpio) + GPIO_BSRR_OFFSET) as Address;
 
-        set_bits(address, val, offset, val_bit_len)
+        // For BSRR, we write directly without read-modify-write
+        if offset > 31 {
+            return Err(MCUError::InvalidOffset);
+        }
+
+        if !(1..=32).contains(&val_bit_len) {
+            return Err(MCUError::InvalidOffset);
+        }
+
+        unsafe {
+            let write_val = (val << offset) & (((1u32 << val_bit_len) - 1) << offset);
+            ptr::write_volatile(address, write_val);
+        }
+
+        Ok(())
     }
 }
 
@@ -245,6 +259,21 @@ fn set_bit(address: Address, bit_pos: u8) -> Result<(), MCUError> {
         let reg_val = ptr::read_volatile(address);
         let update_val = reg_val | (1 << bit_pos);
         ptr::write_volatile(address, update_val);
+    }
+
+    Ok(())
+}
+
+fn write_bit(address: Address, bit_pos: u8) -> Result<(), MCUError> {
+    // Write a 1 directly to a bit position without reading first
+    // Used for write-only registers like BSRR
+    if bit_pos > 31 {
+        return Err(MCUError::InvalidOffset);
+    }
+
+    unsafe {
+        let value = 1u32 << bit_pos;
+        ptr::write_volatile(address, value);
     }
 
     Ok(())
